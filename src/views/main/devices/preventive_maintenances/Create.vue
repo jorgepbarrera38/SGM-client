@@ -1,0 +1,245 @@
+<template>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        Registrar mantenimiento preventivo
+                    </div>
+                    <div class="card-body">
+                        <form @submit.prevent="save">
+                            
+                            <div class="alert alert-danger" v-show="Object.keys(errors).length > 0 ? true : false">
+                                <li v-for="(error, index) in errors" :key="`error-${index}`">
+                                    {{ error[0] }}
+                                </li>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="">Tipo</label>
+                                        <select class="form-control" v-model="preventive_maintenance.type_report">
+                                            <option value="1">Digital</option>
+                                            <option value="2">Físico</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="">Fecha de realización</label>
+                                        <input type="date" class="form-control" v-model="preventive_maintenance.date_of_realization">
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6" v-if="preventive_maintenance.type_report == 2">
+                                    <div class="form-group">
+                                        <label for="">Evidencia (pdf máximo 25MB, no usar métodos de compresión)</label>
+                                        <input type="file" class="form-control" @change="setFileInModel">
+                                    </div>
+                                </div>
+                                <div class="col-md-12" v-if="preventive_maintenance.type_report == 1">
+                                    <div class="form-group">
+                                        <label for="">Descripción del soporte</label>
+                                        <textarea rows="3" class="form-control" v-model="preventive_maintenance.conclusion" maxlength="400"></textarea>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-12">
+                                    <label for="">Repuestos</label>
+                                    <form class="form-inline" @submit.prevent="addReplacement">
+                                        <div class="form-group mr-sm-3 mb-2">
+                                            <select class="form-control" v-model="replacementSelected">
+                                                <option :value="{}">Seleccione repuesto</option>
+                                                <option :value="replacement" v-for="replacement in replacements" :key="replacement.id">{{ replacement.name }}</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group mr-sm-3 mb-2">
+                                            <input type="number" class="form-control" v-model="replacementQuantity" max="100">
+                                        </div>
+                                        <button type="submit" class="btn btn-primary mb-2">
+                                            <i class="fa fa-plus"></i> Agregar
+                                        </button>
+                                    </form>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover table-sm">
+                                            <thead>
+                                                <th>Repuesto</th>
+                                                <th>Cantidad</th>
+                                                <th></th>
+                                            </thead>
+                                            <tbody>
+                                                <tr v-for="(replacement, index) in preventive_maintenance.replacements" :key="`replacement-${ replacement.replacement_id }`">
+                                                    <td>{{ replacement.name }}</td>
+                                                    <td>{{ replacement.quantity }}</td>
+                                                    <td>
+                                                        <a href="#" class="btn btn-danger btn-sm" @click.prevent="deleteReplacement(index)">
+                                                            <i class="fa fa-trash-alt"></i> Eliminar
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6" v-if="preventive_maintenance.type_report == 1">
+                                    <div class="form-group">
+                                        <label for="">Funcionario</label>
+                                        <input type="text" class="form-control" v-model="preventive_maintenance.official_names" maxlength="50">
+                                    </div>
+                                </div>
+                                <div class="col-md-6" v-if="preventive_maintenance.type_report == 1">
+                                    <div class="form-group">
+                                        <label for="">Cargo</label>
+                                        <input type="text" class="form-control" v-model="preventive_maintenance.official_position" maxlength="30">
+                                    </div>
+                                </div>
+                                <div class="col-md-6 offset-md-3" v-if="preventive_maintenance.type_report == 1">
+                                    <div class="form-group">
+                                        <label for="">Firma</label>
+                                        <div class="border border-dark">
+                                            <vueSignature ref="signature" :sigOption="option"></vueSignature> 
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-12" v-if="preventive_maintenance.type_report == 1">
+                                    <center>
+                                        <a href="#" class="btn btn-success btn-sm" @click.prevent="$refs.signature.clear()"><i class="fa fa-eraser"></i> Limpiar</a>
+                                    </center>
+                                </div>
+                            </div>
+
+                            <vue-loading v-if="saving" type="spin" color="#d9544e" :size="{ width: '50px', height: '50px' }"></vue-loading>    
+                            <div v-else>
+                                <button type="submit" class="btn btn-primary btn-sm mr-1" :disabled="!hasPermission('preventive-maintenances.create')">
+                                    <i class="fa fa-save"></i> Guardar
+                                </button>
+                                <a href="#" class="btn btn-danger btn-sm" @click.prevent="$router.go(-1)"><i class="fa fa-times-circle"></i> Cancelar</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    import hasPermission from '../../_utilities/hasPermission'
+    import { VueLoading } from 'vue-loading-template'
+    import vueSignature from 'vue-signature'
+    export default {
+        name: 'devices.movements.create',
+        components: {
+            VueLoading, vueSignature
+        },
+        created () {
+            this.getDataToCreatePreventiveMaintenance()
+        },
+        mixins: [ hasPermission ],
+        data() {
+            return {
+                preventive_maintenance: {
+                    type_report: 1,
+                    date_of_realization: '',
+                    evidence: '',
+                    official_names: '',
+                    official_position: '',
+                    conclusion: '',
+                    replacements: []
+                },
+                replacements: [],
+                replacementSelected: {},
+                replacementQuantity: '',
+                saving: false,
+                errors: {},
+                option:{
+                    penColor:"rgb(0, 0, 0)"
+                }
+            }
+        },
+        methods: {
+            getDataToCreatePreventiveMaintenance () {
+                this.$http.get(`preventive-maintenances/${ this.$route.params.id }/get-data-to-create-preventive-maintenance`).then(response => {
+                    this.preventive_maintenance.conclusion = response.data.conclusion
+                    this.replacements = response.data.replacements
+                })
+            },
+            save () {
+                this.saving = true
+
+                let data = new FormData
+                data.append('date_of_realization', this.preventive_maintenance.date_of_realization)
+                data.append('evidence', this.preventive_maintenance.evidence)
+                data.append('type_report', this.preventive_maintenance.type_report)
+                data.append('conclusion', this.preventive_maintenance.conclusion)
+                data.append('replacementsInJson', JSON.stringify(this.preventive_maintenance.replacements))
+
+                if (this.preventive_maintenance.type_report == 1) {
+                    if (this.$refs.signature.isEmpty()) {
+                        this.saving = false
+                        return this.$toastr.error('Debe firmar')
+                    }
+                    var _this = this
+                    var png = _this.$refs.signature.save()
+                    data.append('signature', png)
+                    data.append('official_names', this.preventive_maintenance.official_names)
+                    data.append('official_position', this.preventive_maintenance.official_position)
+                }
+
+                this.$http.post(`preventive-maintenances/${ this.$route.params.id }`, data).then( response => {
+                    this.saving = false
+                    this.$toastr.success('Mantenimiento preventivo registrado')
+                    this.$router.go(-1)
+                }).catch(error => {
+                    this.saving = false
+                    if (error.response.status == 422) {
+                        this.errors = error.response.data.errors
+                    }
+                })
+            },
+            setFileInModel (e) {
+                this.preventive_maintenance.evidence = e.target.files[0]
+            },
+            addReplacement () {
+                if (Object.keys(this.replacementSelected).length == 0) {
+                    return this.$toastr.error('Seleccione repuesto')
+                }
+
+                if (!this.replacementQuantity) {
+                    return this.$toastr.error('Ingrese la cantidad')
+                }
+
+                if (this.replacementQuantity < 1) {
+                    return this.$toastr.error('Cantidad no válida')
+                }
+
+                let replacementNowIsAdded = this.preventive_maintenance.replacements.find(replacement => replacement.replacement_id == this.replacementSelected.id)
+
+                if (replacementNowIsAdded) {
+                    this.preventive_maintenance.replacements = this.preventive_maintenance.replacements.map( replacement => {
+                        if (replacement.replacement_id == this.replacementSelected.id) {
+                            return { 
+                                replacement_id: replacement.replacement_id, 
+                                name: replacement.name,
+                                quantity: parseInt(replacement.quantity) + parseInt(this.replacementQuantity)
+                            }
+                        } else {
+                            return replacement
+                        }
+                    })
+                } else {
+                    this.preventive_maintenance.replacements.push({ replacement_id: this.replacementSelected.id, name: this.replacementSelected.name, quantity: this.replacementQuantity })
+                }
+                
+                this.replacementSelected = {}
+                this.replacementQuantity = ''
+
+            },
+            deleteReplacement (replacement) {
+                this.preventive_maintenance.replacements.splice(replacement, 1)
+            },
+        },
+    }
+</script>

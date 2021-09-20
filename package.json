@@ -1,0 +1,31 @@
+{
+  "name": "client-vue",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build"
+  },
+  "dependencies": {
+    "axios": "^0.21.1",
+    "core-js": "^3.6.5",
+    "downloadjs": "^1.4.7",
+    "laravel-vue-pagination": "^2.3.1",
+    "moment": "^2.29.1",
+    "toastr": "^2.1.4",
+    "vue": "^2.6.11",
+    "vue-croppa": "^1.3.8",
+    "vue-gallery-slideshow": "^1.5.2",
+    "vue-loading-template": "^1.3.2",
+    "vue-router": "^3.2.0",
+    "vue-signature": "^2.5.1",
+    "vuex": "^3.4.0"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "~4.5.0",
+    "@vue/cli-plugin-router": "~4.5.0",
+    "@vue/cli-plugin-vuex": "~4.5.0",
+    "@vue/cli-service": "~4.5.0",
+    "vue-template-compiler": "^2.6.11"
+  }
+}
