@@ -29,7 +29,7 @@
                             </div>
                             <div class="form-group">
                                 <label for="">Complemento título</label>
-                                <input type="text" class="form-control" v-model="company.complementTitle" maxlength="15">
+                                <input type="text" class="form-control" v-model="company.complement_title" maxlength="15">
                             </div>
                             <vue-loading v-if="saving" type="spin" color="#d9544e" :size="{ width: '50px', height: '50px' }"></vue-loading>    
                             <div v-else>
@@ -63,7 +63,7 @@
                 company: {
                     logo: '',
                     reason_preventive_maintenance_report_digital: '',
-                    complementTitle: '',
+                    complement_title: '',
                 },
                 saving: false,
                 errors: {}
@@ -84,7 +84,7 @@
                     }
 
                     data.append('reason_preventive_maintenance_report_digital', this.company.reason_preventive_maintenance_report_digital)
-                    data.append('complementTitle', this.company.complementTitle ? this.company.complementTitle : '');
+                    data.append('complement_title', this.company.complement_title ? this.company.complement_title : '');
                     
                     this.$http.post(`company`, data).then( response => {
                         this.$toastr.success('Datos actualizados')
