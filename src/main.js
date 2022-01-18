@@ -40,7 +40,7 @@ axios.interceptors.response.use(function (response) {
   return Promise.reject(error);
 });
 
-let production = true
+let production = false
 
 if (production) {
   axios.defaults.baseURL = 'api'
