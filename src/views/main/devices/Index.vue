@@ -86,7 +86,7 @@
                                                 alt="" class="rounded-circle" width="35">
 
                                         </td>
-                                        <td nowrap>{{ device.id }}</td>
+                                        <td nowrap>{{ device.resume_number }}</td>
                                         <td nowrap>{{ device.group.name }}</td>
                                         <td nowrap>{{ device.element.name }}</td>
                                         <td nowrap>{{ device.internal_code }}</td>

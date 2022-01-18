@@ -111,7 +111,7 @@
                                                             {{ device.element.name }}
                                                         </td>
                                                         <td>
-                                                            {{ device.id }}
+                                                            {{ device.resume_number }}
                                                         </td>
                                                         <td>
                                                             {{ device.internal_code }}
@@ -180,7 +180,7 @@
                                                 {{ device.element.name }}
                                             </td>
                                             <td>
-                                                {{ device.id }}
+                                                {{ device.resume_number }}
                                             </td>
                                             <td nowrap>
                                                 {{ device.internal_code }}

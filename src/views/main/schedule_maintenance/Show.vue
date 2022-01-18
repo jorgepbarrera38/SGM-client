@@ -92,7 +92,7 @@
                                         <tr v-for="scheduleMaintenanceDetail in scheduleMaintenanceDetailFltered" :key="scheduleMaintenanceDetail.id">
                                             <td nowrap>{{ scheduleMaintenanceDetail.device.group.name }}</td>
                                             <td nowrap>{{ scheduleMaintenanceDetail.device.element.name }}</td>
-                                            <td>{{ scheduleMaintenanceDetail.device.id }}</td>
+                                            <td>{{ scheduleMaintenanceDetail.device.resume_number }}</td>
                                             <td>{{ scheduleMaintenanceDetail.device.internal_code }}</td>
                                             <td nowrap>{{ scheduleMaintenanceDetail.device.serial_number }}</td>
                                             <td nowrap>{{ scheduleMaintenanceDetail.device.location.name }}</td>
@@ -246,7 +246,7 @@
                                                     :title="record_del_schedule_maintenance.observation">
 
                                                     <td>{{ convertDateHuman(record_del_schedule_maintenance.created_at) }}</td>
-                                                    <td>{{ record_del_schedule_maintenance.device.id }}</td>
+                                                    <td>{{ record_del_schedule_maintenance.device.resume_number }}</td>
                                                     <td>{{ record_del_schedule_maintenance.device.internal_code }}</td>
                                                     <td>{{ record_del_schedule_maintenance.device.serial_number }}</td>
                                                     <td>{{ record_del_schedule_maintenance.user.names }}</td>

@@ -60,6 +60,7 @@
                         </div>
                     </div>
                     <div class="card-body">
+                        <strong>Hoja de vida:</strong> {{ device.resume_number }} <br>
                         <strong>Grupo:</strong> {{ device.group.name }} <br>
                         <strong>Elemento:</strong> {{ device.element.name }} <br>
                         <strong>Ubicación:</strong> {{ device.location.name }} <br>
