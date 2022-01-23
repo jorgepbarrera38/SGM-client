@@ -25,11 +25,17 @@
                                 </div>
                                 <div class="col-md-3">
                                     <div class="form-group">
-                                        <label for="">Fecha de realización</label>
-                                        <input type="date" class="form-control" v-model="other_maintenance.date_of_realization">
+                                        <label for="">Fecha y hora inicio de realización</label>
+                                        <input type="datetime-local" class="form-control" v-model="other_maintenance.date_of_realization">
                                     </div>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="">Fecha y hora fin de realización</label>
+                                        <input type="datetime-local" class="form-control" v-model="other_maintenance.date_of_realization_ending">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
                                     <div class="form-group">
                                         <label for="">Clasificación del servicio</label>
                                         <select class="form-control" v-model="other_maintenance.type_maintenance_id">
@@ -53,7 +59,19 @@
                                     </div>
                                 </div>
 
-                                 <div class="col-md-6">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="">Modo de falla</label>
+                                        <select class="form-control" v-model="other_maintenance.failure_mode_id">
+                                            <option value="">Seleccione opción</option>
+                                            <option :value="failureMode.id" v-for="failureMode in failureModes" :key="`failure-mode-${ failureMode.id }`">
+                                                {{ failureMode.name }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="">Ubicación</label>
                                         <select class="form-control" v-model="other_maintenance.location_id">
@@ -64,7 +82,7 @@
                                         </select>
                                     </div>
                                 </div>
-                                 <div class="col-md-6">
+                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="">Dependencia</label>
                                         <select class="form-control" v-model="other_maintenance.dependence_id">
@@ -120,13 +138,19 @@
                                     </div>
                                 </div>
                                 <div class="col-md-12" v-if="other_maintenance.type_report == 1">
-                                    <div class="form-group">
-                                        <label for="">Funcionario</label>
-                                        <input type="text" class="form-control" v-model="other_maintenance.official_names" maxlength="50">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="">Cargo</label>
-                                        <input type="text" class="form-control" v-model="other_maintenance.official_position" maxlength="30">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="">Funcionario</label>
+                                                <input type="text" class="form-control" v-model="other_maintenance.official_names" maxlength="50">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="">Cargo</label>
+                                                <input type="text" class="form-control" v-model="other_maintenance.official_position" maxlength="30">
+                                            </div>
+                                        </div>
                                     </div>
                                     <div class="row">
                                         <div class="col-md-6 offset-md-3">
@@ -178,6 +202,8 @@
                     official_names: '',
                     official_position: '',
                     date_of_realization: '',
+                    date_of_realization_ending: '',
+                    failure_mode_id: '',
                     evidence: '',
                     type_maintenance_id: '',
                     reason: '',
@@ -186,6 +212,7 @@
                     conclusion: '',
                     replacements: []
                 },
+                failureModes: [],
                 typeMaintenances: [],
                 replacements: [],
                 replacementSelected: {},
@@ -206,6 +233,7 @@
                     this.replacements = response.data.replacements
                     this.locations = response.data.locations
                     this.dependences = response.data.dependences
+                    this.failureModes = response.data.failureModes
                 })
             },
             addReplacement () {
@@ -252,9 +280,11 @@
                 let data = new FormData
 
                 data.append('date_of_realization', this.other_maintenance.date_of_realization)
+                data.append('date_of_realization_ending', this.other_maintenance.date_of_realization_ending)
                 data.append('type_maintenance_id', this.other_maintenance.type_maintenance_id)
                 data.append('reason', this.other_maintenance.reason)
                 data.append('conclusion', this.other_maintenance.conclusion)
+                data.append('failure_mode_id', this.other_maintenance.failure_mode_id)
                 data.append('location_id', this.other_maintenance.location_id)
                 data.append('dependence_id', this.other_maintenance.dependence_id)
                 data.append('evidence', this.other_maintenance.evidence)
@@ -286,10 +316,12 @@
                     this.other_maintenance.official_names = ''
                     this.other_maintenance.official_position = ''
                     this.other_maintenance.date_of_realization = ''
+                    this.other_maintenance.date_of_realization_ending = ''
                     this.other_maintenance.evidence = ''
                     this.other_maintenance.type_maintenance_id = ''
                     this.other_maintenance.reason = ''
                     this.other_maintenance.conclusion = ''
+                    this.other_maintenance.failure_mode_id = ''
                     this.other_maintenance.location_id = ''
                     this.other_maintenance.dependence_id = ''
                     this.other_maintenance.replacements = []

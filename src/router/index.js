@@ -64,6 +64,10 @@ import TypeDocumentIndex from '../views/main/type_documents/Index.vue'
 import TypeDocumentCreate from '../views/main/type_documents/Create.vue'
 import TypeDocumentEdit from '../views/main/type_documents/Edit.vue'
 
+import FailureModeIndex from '../views/main/failure_modes/Index.vue'
+import FailureModeCreate from '../views/main/failure_modes/Create.vue'
+import FailureModeEdit from '../views/main/failure_modes/Edit.vue'
+
 import DevicePhotographicRecordUpdate from '../views/main/devices/photographic_record/Index.vue'
 
 Vue.use(VueRouter)
@@ -363,6 +367,21 @@ const routes = [
         path: 'tipos-de-documentos/:id/editar',
         name: 'typeDocuments.edit',
         component: TypeDocumentEdit
+      },
+      {
+        path: 'modos-de-falla',
+        name: 'failureModes.index',
+        component: FailureModeIndex
+      },
+      {
+        path: 'modos-de-falla/nuevo',
+        name: 'failureModes.create',
+        component: FailureModeCreate
+      },
+      {
+        path: 'modos-de-falla/:id/editar',
+        name: 'failureModes.edit',
+        component: FailureModeEdit
       },
     ]
   }

@@ -56,6 +56,10 @@
                                     @click="hasPermission('devices.down') ? $router.push({ name: 'devices.down.create' }) : ''">
                                     <input type="radio" name="options" id="option3" autocomplete="off"> <i class="fa fa-trash-alt"></i> Dar de baja
                                 </label>
+                                <!--<label :class="{ btn: true, 'btn-info': true, 'btn-sm': true, disabled: !hasPermission('devices.down') }" 
+                                    @click.prevent="showResume()">
+                                    <input type="radio" name="options" id="option3" autocomplete="off"> <i class="fa fa-trash-alt"></i> HOJA
+                                </label>-->
                             </div>
                         </div>
                     </div>
@@ -203,13 +207,15 @@
                         <div class="table-responsive limit-table">
                             <table class="table table-hover table-sm">
                                 <thead>
-                                    <th>Fecha</th>
+                                    <th nowrap>Fecha y hora inicio</th>
+                                    <th nowrap>Fecha y hora fin</th>
                                     <th>Técnico</th>
                                     <th></th>
                                 </thead>
                                 <tbody>
                                     <tr v-for="preventiveMaintenance in device.preventive_maintenances" :key="`preventive-${ preventiveMaintenance.id }`">
                                         <td nowrap>{{ convertDate(preventiveMaintenance.date_of_realization) }}</td>
+                                        <td nowrap>{{ convertDate(preventiveMaintenance.date_of_realization_ending) }}</td>
                                         <td nowrap>{{ preventiveMaintenance.user.names }}</td>
                                         <td nowrap>
                                                 <button class="btn btn-secondary btn-sm pl-3 pr-3 mr-1" title="Información" 
@@ -249,7 +255,8 @@
                         <div class="table-responsive limit-table">
                             <table class="table table-hover table-sm">
                                 <thead>
-                                    <th>Fecha</th>
+                                    <th nowrap>Fecha y hora inicio</th>
+                                    <th nowrap>Fecha y hora fin</th>
                                     <th>Clasificación</th>
                                     <th>Técnico</th>
                                     <th></th>
@@ -257,6 +264,7 @@
                                 <tbody>
                                     <tr v-for="other_maintenance in device.other_maintenances" :key="`other-maint-${ other_maintenance.id }`">
                                         <td nowrap>{{ convertDate(other_maintenance.date_of_realization) }}</td>
+                                        <td nowrap>{{ convertDate(other_maintenance.date_of_realization_ending) }}</td>
                                         <td nowrap>{{ other_maintenance.type_other_maintenance.name }}</td>
                                         <td nowrap>{{ other_maintenance.user.names }}</td>
                                         <td nowrap>
@@ -496,7 +504,7 @@
                 })
             },
             convertDate (date) {
-                return this.$moment(date).format('DD[-]MMMM[-]Y')
+                return this.$moment(date).format('DD[-]MMMM[-]Y HH[:]mm')
             },
             convertDateSchedule (date) {
                 return this.$moment(date).format('Y[-]MMMM')
@@ -512,6 +520,13 @@
                     if (error.response.status == 404) {
                         this.$toastr.error('El registro no existe o ya fue eliminado')
                     }
+                })
+            },
+            showResume () {
+                this.$http.get(`devices/${ this.$route.params.id }/get-resume`, { responseType: 'blob' }).then( response => {
+                    const evidence = URL.createObjectURL(response.data)
+                    this.evidence = evidence
+                    $('#modalFullHeight').modal('show')
                 })
             }
         },

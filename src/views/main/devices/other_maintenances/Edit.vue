@@ -25,8 +25,14 @@
                                 </div>
                                 <div class="col-md-3">
                                     <div class="form-group">
-                                        <label for="">Fecha de realización</label>
-                                        <input type="date" class="form-control" v-model="other_maintenance.date_of_realization">
+                                        <label for="">Fecha y hora inicio de realización</label>
+                                        <input type="datetime-local" class="form-control" v-model="other_maintenance.date_of_realization">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="">Fecha y hora fin de realización</label>
+                                        <input type="datetime-local" class="form-control" v-model="other_maintenance.date_of_realization_ending">
                                     </div>
                                 </div>
                                 <div class="col-md-3">
@@ -40,7 +46,7 @@
                                         </select>
                                     </div>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-12">
                                     <div class="form-group">
                                         <label for="">Motivo</label>
                                         <input type="text" class="form-control" v-model="other_maintenance.reason" maxlength="400">
@@ -50,6 +56,18 @@
                                     <div class="form-group">
                                         <label for="">Conclusión</label>
                                         <input type="text" class="form-control" v-model="other_maintenance.conclusion" maxlength="400">
+                                    </div>
+                                </div>
+
+                                <div :class="{'col-md-6': other_maintenance.type_report == 2, 'col-md-12': other_maintenance.type_report == 1  }">
+                                    <div class="form-group">
+                                        <label for="">Modo de falla</label>
+                                        <select class="form-control" v-model="other_maintenance.failure_mode_id">
+                                            <option value="">Seleccione opción</option>
+                                            <option :value="failureMode.id" v-for="failureMode in failureModes" :key="`failure-mode-${ failureMode.id }`">
+                                                {{ failureMode.name }}
+                                            </option>
+                                        </select>
                                     </div>
                                 </div>
 
@@ -142,6 +160,7 @@
 <script>
     import { VueLoading } from 'vue-loading-template'
     import vueSignature from "vue-signature"
+    import moment from 'moment'
     export default {
         name: 'devices.other-maintenances.create',
         components: {
@@ -158,13 +177,16 @@
                     official_names: '',
                     official_position: '',
                     date_of_realization: '',
+                    date_of_realization_ending: '',
                     evidence: '',
                     type_maintenance_id: '',
                     reason: '',
                     conclusion: '',
+                    failure_mode_id: '',
                     replacements: []
                 },
                 typeMaintenances: [],
+                failureModes: [],
                 replacements: [],
                 replacementSelected: {},
                 replacementQuantity: '',
@@ -178,8 +200,10 @@
         methods: {
             getOtherMaintenance () {
                 this.$http.get(`other-maintenances/${ this.$route.params.idOtherMaintenance }`).then( response => {
-                    this.other_maintenance.date_of_realization = response.data.date_of_realization
+                    this.other_maintenance.date_of_realization = moment(response.data.date_of_realization).format('YYYY-MM-DDTHH:mm')
+                    this.other_maintenance.date_of_realization_ending = moment(response.data.date_of_realization_ending).format('YYYY-MM-DDTHH:mm')
                     this.other_maintenance.type_maintenance_id = response.data.type_other_maintenance_id
+                    this.other_maintenance.failure_mode_id = response.data.failure_mode_id
                     this.other_maintenance.reason = response.data.reason
                     this.other_maintenance.conclusion = response.data.conclusion
                     this.other_maintenance.replacements = response.data.replacement_maintenancables.map(replacement => {
@@ -195,6 +219,7 @@
                 this.$http.get('other-maintenances/get-data-to-create-other-maintenance').then( response => {
                     this.typeMaintenances = response.data.typeOtherMaintenances
                     this.replacements = response.data.replacements
+                    this.failureModes = response.data.failureModes
                 })
             },
             addReplacement () {
@@ -241,9 +266,11 @@
                 let data = new FormData //type_maintenance_id
 
                 data.append('date_of_realization', this.other_maintenance.date_of_realization)
+                data.append('date_of_realization_ending', this.other_maintenance.date_of_realization_ending)
                 data.append('type_maintenance_id', this.other_maintenance.type_maintenance_id)
                 data.append('reason', this.other_maintenance.reason)
                 data.append('conclusion', this.other_maintenance.conclusion)
+                data.append('failure_mode_id', this.other_maintenance.failure_mode_id)
                 data.append('evidence', this.other_maintenance.evidence)
                 data.append('replacementsInJson', JSON.stringify(this.other_maintenance.replacements))
                 data.append('_method', 'PUT')

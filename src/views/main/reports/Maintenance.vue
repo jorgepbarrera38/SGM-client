@@ -11,13 +11,13 @@
                     <div class="card-body">
                         <form @submit.prevent="getMaintenances()">
                             <div class="form-row">
-                                <div class="form-group col-md-2">
+                                <div class="form-group col-md-3">
                                     <label for="">Fecha inicial</label>
-                                    <input type="date" class="form-control" v-model="parameters.initial_date" required>
+                                    <input type="datetime-local" class="form-control" v-model="parameters.initial_date" required>
                                 </div>
-                                <div class="form-group col-md-2">
+                                <div class="form-group col-md-3">
                                     <label for="">Fecha final</label>
-                                    <input type="date" class="form-control" v-model="parameters.final_date" required>
+                                    <input type="datetime-local" class="form-control" v-model="parameters.final_date" required>
                                 </div>
                                 <div class="form-group col-md-3">
                                     <label for="">Tipo</label>
@@ -27,14 +27,14 @@
                                         <option value="3">Mantenimientos generales</option>
                                     </select>
                                 </div>
-                                <div class="form-group col-md-2">
+                                <div class="form-group col-md-3">
                                     <label for="">Grupo</label>
                                     <select class="form-control" v-model="parameters.group" :disabled="typeMaintenance == 3">
                                         <option value="">Seleccione grupo</option>
                                         <option :value="group.id" v-for="group in groups" :key="group.id">{{ group.name }}</option>
                                     </select>
                                 </div>
-                                <div class="form-group col-md-2">
+                                <div class="form-group col-md-3">
                                     <label for="">Usuario</label>
                                     <select class="form-control" v-model="parameters.user">
                                         <option value="">Todos</option>
@@ -84,7 +84,8 @@
                             <div class="table-responsive" style="margin-top:15px" v-if="typeMaintenanceSelected == 1">
                                 <table class="table table-hover table-sm">
                                     <thead>
-                                        <th>Fecha</th>
+                                        <th nowrap>Fecha y hora inicio</th>
+                                        <th nowrap>Fecha y hora fin</th>
                                         <th>Grupo</th>
                                         <th>Dispositivo</th>
                                         <th>Ubicación</th>
@@ -95,6 +96,7 @@
                                     <tbody>
                                         <tr v-for="preventiveMaintenance in maintenances.data" :key="preventiveMaintenance.id">
                                             <td nowrap>{{ convertDate(preventiveMaintenance.date_of_realization) }}</td>
+                                            <td nowrap>{{ convertDate(preventiveMaintenance.date_of_realization_ending) }}</td>
                                             <td nowrap>{{ preventiveMaintenance.device.group.name }}</td>
                                             <td nowrap>{{ preventiveMaintenance.device.element.name + ' - ' + preventiveMaintenance.device.internal_code + ' - ' + preventiveMaintenance.device.serial_number }}</td>
                                             <td nowrap>{{ preventiveMaintenance.location.name }}</td>
@@ -119,23 +121,27 @@
                             <div class="table-responsive" style="margin-top:15px" v-if="typeMaintenanceSelected == 2">
                                 <table class="table table-hover table-sm">
                                     <thead>
-                                        <th>Fecha</th>
+                                        <th nowrap>Fecha y hora inicio</th>
+                                        <th nowrap>Fecha y hora fin</th>
                                         <th>Grupo</th>
                                         <th>Dispositivo</th>
                                         <th>Ubicación</th>
                                         <th>Dependencia</th>
                                         <th>Clasificación</th>
+                                        <th nowrap>Modo de falla</th>
                                         <th>Usuario</th>
                                         <th></th>
                                     </thead>
                                     <tbody>
                                         <tr v-for="otherMaintenance in maintenances.data" :key="otherMaintenance.id">
                                             <td nowrap>{{ convertDate(otherMaintenance.date_of_realization) }}</td>
+                                            <td nowrap>{{ convertDate(otherMaintenance.date_of_realization_ending) }}</td>
                                             <td nowrap>{{ otherMaintenance.device.group.name }}</td>
                                             <td nowrap>{{ otherMaintenance.device.element.name + ' - ' + otherMaintenance.device.internal_code + ' - ' + otherMaintenance.device.serial_number }}</td>
                                             <td nowrap>{{ otherMaintenance.location.name }}</td>
                                             <td nowrap>{{ otherMaintenance.dependence.name }}</td>
                                             <td nowrap>{{ otherMaintenance.type_other_maintenance.name }}</td>
+                                            <td nowrap>{{ otherMaintenance.failure_mode ? otherMaintenance.failure_mode.name : '' }}</td>
                                             <td nowrap>{{ otherMaintenance.user.names }}</td>
                                             <td nowrap>
                                                 <button class="btn btn-primary btn-sm mr-1" title="Evidencia" 
@@ -230,6 +236,7 @@
     import { VueLoading } from 'vue-loading-template'
     import ModalFullHeight from '../components/ModalFullHeight'
     import download from 'downloadjs'
+import moment from 'moment'
     export default {
         name: 'reports.maintenances.index',
         components: {
@@ -296,6 +303,8 @@
                     if (response.data.total == 0) {
                         this.$toastr.info('No hay registros')
                     }
+                    //console.log(response.data);
+                    //console.log(moment(response.data).format('HH'));
                     this.maintenances = response.data
                     this.loading = false
                 }).catch(error => {
@@ -354,7 +363,7 @@
                 $('#exampleModal').modal('show')
             },
             convertDate (date) {
-                return this.$moment(date).format('DD[-]MMMM[-]Y')
+                return this.$moment(date).format('DD[-]MMMM[-]Y HH[:]mm')
             }
         },
         watch: {

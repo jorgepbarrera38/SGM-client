@@ -13,11 +13,11 @@
                             <div class="form-row">
                                 <div class="form-group col-md-3">
                                     <label for="">Fecha inicial</label>
-                                    <input type="date" class="form-control" v-model="parameters.initial_date" required>
+                                    <input type="datetime-local" class="form-control" v-model="parameters.initial_date" required>
                                 </div>
                                 <div class="form-group col-md-3">
                                     <label for="">Fecha final</label>
-                                    <input type="date" class="form-control" v-model="parameters.final_date" required>
+                                    <input type="datetime-local" class="form-control" v-model="parameters.final_date" required>
                                 </div>
                                 <div class="form-group col-md-1">
                                     <label for="" style="opacity:0">ALEXIS</label> <br>
@@ -49,7 +49,8 @@
                         <div class="table-responsive">
                             <table class="table table-hover table-sm">
                                 <thead>
-                                    <th>Fecha</th>
+                                    <th nowrap>Fecha y hora inicio</th>
+                                    <th nowrap>Fecha y hora fin</th>
                                     <th>Repuesto</th>
                                     <th>Cantidad</th>
                                     <th>Tipo</th>
@@ -59,6 +60,7 @@
                                 <tbody>
                                     <tr v-for="replacement in replacements.data" :key="replacement.id">
                                         <td nowrap>{{ convertDate(replacement.replacement_maintenancable.date_of_realization) }}</td>
+                                        <td nowrap>{{ convertDate(replacement.replacement_maintenancable.date_of_realization_ending) }}</td>
                                         <td nowrap>{{ replacement.replacement.name }}</td>
                                         <td nowrap>{{ replacement.quantity }}</td>
                                         <td nowrap>
@@ -147,7 +149,7 @@
                 })
             },
             convertDate (date) {
-                return this.$moment(date).format('DD[-]MMMM[-]Y')
+                return this.$moment(date).format('DD[-]MMMM[-]Y HH[:]mm')
             }
         },
     }
