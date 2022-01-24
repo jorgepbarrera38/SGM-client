@@ -1,13 +1,13 @@
 <template>
     <div class="container">
         <div class="row">
-            <div class="col-md-12">
+            <div class="col-md-12 mb-2">
                 <div class="card">
                     <div class="card-header">
                         Editar mantenimiento
                     </div>
                     <div class="card-body">
-                        <form @submit.prevent="save">
+                        <div @submit.prevent="save">
                             <div class="alert alert-danger" v-show="Object.keys(errors).length > 0 ? true : false">
                                 <li v-for="(error, index) in errors" :key="index">
                                     {{ error[0] }}
@@ -77,79 +77,166 @@
                                         <input type="file" class="form-control" @change="setFileInModel">
                                     </div>
                                 </div>
-                                <div class="col-md-12">
-                                    <label for="">Repuestos</label>
-                                    <form class="form-inline" @submit.prevent="addReplacement">
-                                        <div class="form-group mr-sm-3 mb-2">
-                                            <select class="form-control" v-model="replacementSelected">
-                                                <option :value="{}">Seleccione repuesto</option>
-                                                <option :value="replacement" v-for="replacement in replacements" :key="replacement.id">{{ replacement.name }}</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-group mr-sm-3 mb-2">
-                                            <input type="number" class="form-control" v-model="replacementQuantity" max="100">
-                                        </div>
-                                        <button type="submit" class="btn btn-primary mb-2">
-                                            <i class="fa fa-plus"></i> Agregar
-                                        </button>
-                                    </form>
-                                    <div class="table-responsive">
-                                        <table class="table table-hover table-sm">
-                                            <thead>
-                                                <th>Repuesto</th>
-                                                <th>Cantidad</th>
-                                                <th></th>
-                                            </thead>
-                                            <tbody>
-                                                <tr v-for="(replacement, index) in other_maintenance.replacements" :key="`replacement-${ replacement.replacement_id }`">
-                                                    <td>{{ replacement.name }}</td>
-                                                    <td>{{ replacement.quantity }}</td>
-                                                    <td>
-                                                        <a href="#" class="btn btn-danger btn-sm" @click.prevent="deleteReplacement(index)">
-                                                            <i class="fa fa-trash-alt"></i> Eliminar
-                                                        </a>
-                                                    </td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--Anexos fotográficos-->
+            <div class="col-md-12 mb-2" v-if="other_maintenance.type_report == 1">
+                <div class="card">
+                    <div class="card-header">
+                        Anexos fotográficos
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <span class="panel-title">
+                                            Subir imagen
+                                        </span>
+                                    </div>
+                                    <div class="card-body">
+                                        <croppa
+                                            v-model="myCroppa"
+                                            :placeholder-font-size="14"
+                                            placeholder="Seleccione imagen"
+                                            :prevent-white-space="true"
+                                            >
+                                        </croppa>
+                                        <input type="text" class="form-control mb-2" v-model="myCroppaDescription" placeholder="Descripción" maxlength="50">
+                                        <a href="#" class="btn btn-primary btn-sm" @click.prevent="uploadImage">
+                                            <i class="fa fa-upload"></i> Agregar
+                                        </a>
                                     </div>
                                 </div>
-                                <div class="col-md-12" v-if="other_maintenance.type_report == 1">
-                                    <div class="form-row">
-                                        <div class="form-group col-md-6">
-                                            <label for="">Funcionario</label>
-                                            <input type="text" class="form-control" v-model="other_maintenance.official_names" maxlength="50">
-                                        </div>
-                                        <div class="form-group col-md-6">
-                                            <label for="">Cargo</label>
-                                            <input type="text" class="form-control" v-model="other_maintenance.official_position" maxlength="30">
-                                        </div>
+                            </div>
+                            <div class="col-md-9">
+                                <table class="table table-sm table-hover">
+                                    <thead>
+                                        <th>Imagen</th>
+                                        <th>Descripción</th>
+                                        <th></th>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="(image, index) in photographicAnnexes" :key="'image-' + index">
+                                            <td><img width="110" :src="image.image" alt="" ></td>
+                                            <td>{{ image.description }}</td>
+                                            <td>
+                                                <button class="btn btn-danger btn-sm" @click="photographicAnnexes.splice(index, 1)">
+                                                    <i class="fa fa-trash-alt"></i> Eliminar
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--Repuestos-->
+            <div class="col-md-12 mb-2">
+                <div class="card">
+                    <div class="card-header">
+                        Repuestos
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <form class="form-inline" @submit.prevent="addReplacement">
+                                    <div class="form-group mr-sm-3 mb-2">
+                                        <select class="form-control" v-model="replacementSelected">
+                                            <option :value="{}">Seleccione repuesto</option>
+                                            <option :value="replacement" v-for="replacement in replacements" :key="replacement.id">{{ replacement.name }}</option>
+                                        </select>
                                     </div>
-                                    <div class="row">
-                                        <div class="col-md-6 offset-md-3">
-                                            <div class="form-group">
-                                                <label for="">Firma</label>
-                                                <div class="border border-dark">
-                                                    <vueSignature ref="signature" :sigOption="option"></vueSignature> 
-                                                </div>
+                                    <div class="form-group mr-sm-3 mb-2">
+                                        <input type="number" class="form-control" v-model="replacementQuantity" max="100">
+                                    </div>
+                                    <button type="submit" class="btn btn-primary mb-2">
+                                        <i class="fa fa-plus"></i> Agregar
+                                    </button>
+                                </form>
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-sm">
+                                        <thead>
+                                            <th>Repuesto</th>
+                                            <th>Cantidad</th>
+                                            <th></th>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-for="(replacement, index) in other_maintenance.replacements" :key="`replacement-${ replacement.replacement_id }`">
+                                                <td>{{ replacement.name }}</td>
+                                                <td>{{ replacement.quantity }}</td>
+                                                <td>
+                                                    <a href="#" class="btn btn-danger btn-sm" @click.prevent="deleteReplacement(index)">
+                                                        <i class="fa fa-trash-alt"></i> Eliminar
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--Verificación de lo ejecutado-->
+            <div class="col-md-12 mb-2">
+                <div class="card">
+                    <div class="card-header">
+                        <span>
+                            Verificación y guardado
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-12" v-if="other_maintenance.type_report == 1">
+                                <div class="form-row">
+                                    <div class="form-group col-md-6">
+                                        <label for="">Funcionario</label>
+                                        <input type="text" class="form-control" v-model="other_maintenance.official_names" maxlength="50">
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <label for="">Cargo</label>
+                                        <input type="text" class="form-control" v-model="other_maintenance.official_position" maxlength="30">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 offset-md-3">
+                                        <div class="form-group">
+                                            <label for="">Firma</label>
+                                            <div class="border border-dark">
+                                                <vueSignature ref="signature" :sigOption="option"></vueSignature> 
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <center>
-                                                <a href="#" class="btn btn-success btn-sm" @click.prevent="$refs.signature.clear()"><i class="fa fa-eraser"></i> Limpiar</a>
-                                            </center>
-                                        </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <center>
+                                            <a href="#" class="btn btn-success btn-sm" @click.prevent="$refs.signature.clear()"><i class="fa fa-eraser"></i> Limpiar</a>
+                                        </center>
                                     </div>
                                 </div>
                             </div>
-                            <vue-loading v-if="saving" type="spin" color="#d9544e" :size="{ width: '50px', height: '50px' }"></vue-loading>    
-                            <div v-else>
-                                <button type="submit" class="btn btn-primary btn-sm mr-1"><i class="fa fa-save"></i> Guardar</button>
-                                <a href="#" class="btn btn-danger btn-sm" @click.prevent="$router.go(-1)"><i class="fa fa-times-circle"></i> Cancelar</a>
+                        </div>
+                        <hr v-if="other_maintenance.type_report == 1">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <vue-loading v-if="saving" type="spin" color="#d9544e" :size="{ width: '50px', height: '50px' }"></vue-loading>    
+                                <div v-else>
+                                    <button @click="save" class="btn btn-primary btn-sm mr-1"><i class="fa fa-save"></i> Guardar</button>
+                                    <a href="#" class="btn btn-danger btn-sm" @click.prevent="$router.go(-1)"><i class="fa fa-times-circle"></i> Cancelar</a>
+                                </div>
                             </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -185,6 +272,9 @@
                     failure_mode_id: '',
                     replacements: []
                 },
+                myCroppa: {},
+                myCroppaDescription: '',
+                photographicAnnexes: [],
                 typeMaintenances: [],
                 failureModes: [],
                 replacements: [],
@@ -198,6 +288,25 @@
             }
         },
         methods: {
+            uploadImage () {
+                let image = this.myCroppa.generateDataUrl('image/jpeg')
+
+                if (!image) {
+                    return this.$toastr.error('Seleccione la imagen')
+                }
+
+                if (!this.myCroppaDescription) {
+                    return this.$toastr.error('Ingrese la descripción de la imagen')
+                }
+
+                this.photographicAnnexes.push({
+                    description: this.myCroppaDescription,
+                    image
+                })
+
+                this.myCroppa.remove()
+                this.myCroppaDescription = ''
+            },
             getOtherMaintenance () {
                 this.$http.get(`other-maintenances/${ this.$route.params.idOtherMaintenance }`).then( response => {
                     this.other_maintenance.date_of_realization = moment(response.data.date_of_realization).format('YYYY-MM-DDTHH:mm')
@@ -273,6 +382,10 @@
                 data.append('failure_mode_id', this.other_maintenance.failure_mode_id)
                 data.append('evidence', this.other_maintenance.evidence)
                 data.append('replacementsInJson', JSON.stringify(this.other_maintenance.replacements))
+                this.photographicAnnexes.forEach((image, index) => {
+                    data.append(`photographicAnnexes[${index}][description]`, image.description)
+                    data.append(`photographicAnnexes[${index}][image]`, image.image)
+                })
                 data.append('_method', 'PUT')
 
                 data.append('type_report', this.other_maintenance.type_report)
