@@ -82,7 +82,7 @@
                                             :title="`\rDESCRIPCIÓN:\n${ device.description } \n\nOBSERVACIÓNES:\n${ device.observations ? device.observations : '' }`">
                                         <td>
                                             <img 
-                                                :src="device.photographic_records[0] ? `${ $serverFiles }/${ device.photographic_records[0].photo }` : 'https://pngimage.net/wp-content/uploads/2018/06/img-icon-png-3.png'" 
+                                                :src="device.photographic_records[0] ? `${ $serverFiles }${ device.photographic_records[0].photo }` : 'https://pngimage.net/wp-content/uploads/2018/06/img-icon-png-3.png'" 
                                                 alt="" class="rounded-circle" width="35">
 
                                         </td>

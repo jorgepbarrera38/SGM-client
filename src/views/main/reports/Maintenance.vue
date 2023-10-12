@@ -29,7 +29,7 @@
                                 </div>
                                 <div class="form-group col-md-3">
                                     <label for="">Grupo</label>
-                                    <select class="form-control" v-model="parameters.group" :disabled="typeMaintenance == 3">
+                                    <select class="form-control" v-model="parameters.group">
                                         <option value="">Seleccione grupo</option>
                                         <option :value="group.id" v-for="group in groups" :key="group.id">{{ group.name }}</option>
                                     </select>
@@ -68,13 +68,13 @@
                                     <i class="fa fa-file-excel" v-else></i>
                                     Exportar
                                 </button>
-                                <!--<button class="btn btn-danger btn-sm" @click="exportReportPdf">
+                                <button class="btn btn-danger btn-sm" @click="exportReportPdf">
                                     <div class="spinner-border spinner-border-sm" role="status" v-if="downloadingPdf">
                                         <span class="sr-only">Loading...</span>
                                     </div>
                                     <i class="fa fa-file-pdf" v-else></i>
                                     Exportar
-                                </button>*-->
+                                </button>
                             </div>
                         </span>
                     </div>
@@ -103,13 +103,17 @@
                                             <td nowrap>{{ preventiveMaintenance.dependence.name }}</td>
                                             <td nowrap>{{ preventiveMaintenance.user.names }}</td>
                                             <td nowrap>
-                                                <button class="btn btn-primary btn-sm mr-1" title="Evidencia" 
-                                                    @click="showEvidence(preventiveMaintenance.evidence)">
-                                                    <i class="fa fa-eye"></i>
+                                                <button class="btn btn-primary btn-sm mr-1" title="Evidencia" :disabled="preventiveMaintenance.gettingEvidence"
+                                                    @click="showEvidenceFromPreventiveMaintenance(preventiveMaintenance)">
+                                                    <div class="spinner-border spinner-border-sm" role="status" 
+                                                        v-if="preventiveMaintenance.gettingEvidence">
+                                                        <span class="sr-only">Loading...</span>
+                                                    </div>
+                                                    <i class="fa fa-eye" v-else></i>
                                                 </button>
                                                 <button class="btn btn-secondary btn-sm mr-1" title="Repuestos usados" 
-                                                    v-if="preventiveMaintenance.replacement_maintenancables.length"
-                                                    @click="showReplacements(preventiveMaintenance.replacement_maintenancables)">
+                                                    v-if="preventiveMaintenance.replacements.length"
+                                                    @click="showReplacements(preventiveMaintenance.replacements)">
                                                     <i class="fa fa-cogs"></i>
                                                 </button>
                                             </td>
@@ -144,13 +148,17 @@
                                             <td nowrap>{{ otherMaintenance.failure_mode ? otherMaintenance.failure_mode.name : '' }}</td>
                                             <td nowrap>{{ otherMaintenance.user.names }}</td>
                                             <td nowrap>
-                                                <button class="btn btn-primary btn-sm mr-1" title="Evidencia" 
-                                                    @click="showEvidence(otherMaintenance.evidence)">
-                                                    <i class="fa fa-eye"></i>
+                                                <button class="btn btn-primary btn-sm mr-1" title="Evidencia" :disabled="otherMaintenance.gettingEvidence"
+                                                    @click="showEvidenceFromOtherMaintenance(otherMaintenance)">
+                                                    <div class="spinner-border spinner-border-sm" role="status" 
+                                                        v-if="otherMaintenance.gettingEvidence">
+                                                        <span class="sr-only">Loading...</span>
+                                                    </div>
+                                                    <i class="fa fa-eye" v-else></i>
                                                 </button>
                                                 <button class="btn btn-secondary btn-sm mr-1" title="Repuestos usados" 
-                                                    v-if="otherMaintenance.replacement_maintenancables.length"
-                                                    @click="showReplacements(otherMaintenance.replacement_maintenancables)">
+                                                    v-if="otherMaintenance.replacements.length"
+                                                    @click="showReplacements(otherMaintenance.replacements)">
                                                     <i class="fa fa-cogs"></i>
                                                 </button>
                                             </td>
@@ -162,7 +170,8 @@
                             <div class="table-responsive" style="margin-top:15px" v-if="typeMaintenanceSelected == 3">
                                 <table class="table table-hover table-sm">
                                     <thead>
-                                        <th>Fecha</th>
+                                        <th nowrap>Fecha y hora inicio</th>
+                                        <th nowrap>Fecha y hora fin</th>
                                         <th>Ubicación</th>
                                         <th>Dependencia</th>
                                         <th>Clasificación</th>
@@ -172,18 +181,23 @@
                                     <tbody>
                                         <tr v-for="otherMaintenance in maintenances.data" :key="otherMaintenance.id">
                                             <td nowrap>{{ convertDate(otherMaintenance.date_of_realization) }}</td>
+                                            <td nowrap>{{ convertDate(otherMaintenance.date_of_realization_ending) }}</td>
                                             <td nowrap>{{ otherMaintenance.location.name }}</td>
                                             <td nowrap>{{ otherMaintenance.dependence.name }}</td>
                                             <td nowrap>{{ otherMaintenance.type_other_maintenance.name }}</td>
                                             <td nowrap>{{ otherMaintenance.user.names }}</td>
                                             <td nowrap>
-                                                <button class="btn btn-primary btn-sm mr-1" title="Evidencia" 
-                                                    @click="showEvidence(otherMaintenance.evidence)">
-                                                    <i class="fa fa-eye"></i>
+                                                <button class="btn btn-primary btn-sm mr-1" title="Evidencia" :disabled="otherMaintenance.gettingEvidence"
+                                                    @click="showEvidenceFromOtherMaintenance(otherMaintenance)">
+                                                    <div class="spinner-border spinner-border-sm" role="status" 
+                                                        v-if="otherMaintenance.gettingEvidence">
+                                                        <span class="sr-only">Loading...</span>
+                                                    </div>
+                                                    <i class="fa fa-eye" v-else></i>
                                                 </button>
                                                 <button class="btn btn-secondary btn-sm mr-1" title="Repuestos usados" 
-                                                    v-if="otherMaintenance.replacement_maintenancables.length"
-                                                    @click="showReplacements(otherMaintenance.replacement_maintenancables)">
+                                                    v-if="otherMaintenance.replacements.length"
+                                                    @click="showReplacements(otherMaintenance.replacements)">
                                                     <i class="fa fa-cogs"></i>
                                                 </button>
                                             </td>
@@ -273,17 +287,17 @@ import moment from 'moment'
                 this.$http.get('reports/get-users-technical-support-and-groups').then( response => {                        
                     this.users = response.data.users
                     this.groups = response.data.groups
-                    console.log(this.groups);
                 })
             },
             getMaintenances (page = 1) {
-
-                if (this.typeMaintenance != 3) {
-                    if (!this.parameters.group) {
-                        return this.$toastr.error('Seleccione el grupo')
-                    }
-
+                
+                if (!this.parameters.group) {
+                    return this.$toastr.error('Seleccione el grupo')
                 }
+                /*if (this.typeMaintenance != 3) {
+                    return this.$toastr.error('Seleccione el grupo')
+
+                }*/
 
                 this.loading = true
                 this.maintenances = []
@@ -298,15 +312,20 @@ import moment from 'moment'
                             &type_maintenance=${ this.typeMaintenanceSelected }
                             &group=${ this.group_selected }
                             &user_selected=${ this.user_selected }`
+                            
                 this.$http.get(URI)
-                    .then( response => {                        
-                    if (response.data.total == 0) {
-                        this.$toastr.info('No hay registros')
-                    }
-                    //console.log(response.data);
-                    //console.log(moment(response.data).format('HH'));
-                    this.maintenances = response.data
-                    this.loading = false
+                    .then( response => {      
+                        this.loading = false
+                        
+                        if (response.data.total == 0) {
+                            this.$toastr.info('No hay registros')
+                        }
+                        
+                        response.data.data.forEach(preventiveMaintenance => {
+                            this.$set(preventiveMaintenance, 'gettingEvidence', false)
+                        })
+
+                        this.maintenances = response.data
                 }).catch(error => {
                     this.loading = false
                     if (error.response.status == 422) {
@@ -314,9 +333,29 @@ import moment from 'moment'
                     }
                 })
             },
-            showEvidence (evidence) {
-                this.evidence = `${this.$serverFiles}/${ evidence }`
-                $('#modalFullHeight').modal('show')
+            showEvidenceFromPreventiveMaintenance (preventiveMaintenance) {
+                preventiveMaintenance.gettingEvidence = true
+                this.$http.get(`preventive-maintenances/${ preventiveMaintenance.id }/get-evidence-from-preventive-maintenance`, { responseType: 'blob' }).then( response => {
+                    const evidence = URL.createObjectURL(response.data)
+                    this.evidence = evidence
+                    $('#modalFullHeight').modal('show')
+                    preventiveMaintenance.gettingEvidence = false
+                }).catch( errors => {
+                    preventiveMaintenance.gettingEvidence = false
+                    this.$toastr.error('El archivo no se pudo generar')
+                })
+            },
+            showEvidenceFromOtherMaintenance (otherMaintenance) {
+                otherMaintenance.gettingEvidence = true
+                this.$http.get(`other-maintenances/${ otherMaintenance.id }/get-evidence-from-other-maintenance`, { responseType: 'blob' }).then( response => {
+                    const evidence = URL.createObjectURL(response.data)
+                    this.evidence = evidence
+                    $('#modalFullHeight').modal('show')
+                    otherMaintenance.gettingEvidence = false
+                }).catch( errors => {
+                    otherMaintenance.gettingEvidence = false
+                    this.$toastr.error('El archivo no se pudo generar')
+                })
             },
             exportReportExcel () {
                 this.downloadingExcel = true

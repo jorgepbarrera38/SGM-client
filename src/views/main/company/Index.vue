@@ -22,6 +22,7 @@
                                     :prevent-white-space="true"
                                     >
                                 </croppa>
+                                <img class="img img-thumbnail" width="150" :src="$serverFiles + company.logo " alt="">
                             </div>
                             <div class="form-group">
                                 <label for="">Motivo de servicio para mantenimientos preventivos</label>
@@ -30,6 +31,19 @@
                             <div class="form-group">
                                 <label for="">Complemento título</label>
                                 <input type="text" class="form-control" v-model="company.complement_title" maxlength="15">
+                            </div>
+                            <div class="form-group">
+                                <div class="form-group">
+                                    <label for="">Marca de agua para informes</label>
+                                    <croppa
+                                        v-model="myCroppaWatermark"
+                                        :placeholder-font-size="14"
+                                        placeholder="Seleccione imagen"
+                                        :prevent-white-space="true"
+                                        >
+                                    </croppa>
+                                    <img class="img img-thumbnail" width="150" :src="$serverFiles + company.watermark " alt="">
+                                </div>
                             </div>
                             <vue-loading v-if="saving" type="spin" color="#d9544e" :size="{ width: '50px', height: '50px' }"></vue-loading>    
                             <div v-else>
@@ -61,10 +75,12 @@
             return {
                 myCroppa: {},
                 company: {
+                    watermark: '',
                     logo: '',
                     reason_preventive_maintenance_report_digital: '',
                     complement_title: '',
                 },
+                myCroppaWatermark: {},
                 saving: false,
                 errors: {}
             }
@@ -79,24 +95,35 @@
                 this.saving = true
                 this.myCroppa.generateBlob((blob) => {
                     let data = new FormData
+
                     if (blob) {
                         data.append('logo', blob)
                     }
 
-                    data.append('reason_preventive_maintenance_report_digital', this.company.reason_preventive_maintenance_report_digital)
-                    data.append('complement_title', this.company.complement_title ? this.company.complement_title : '');
-                    
-                    this.$http.post(`company`, data).then( response => {
-                        this.$toastr.success('Datos actualizados')
-                        this.saving = false
-                        this.errors = {}
-                        this.myCroppa.remove()
-                    }).catch(error => {
-                        this.saving = false
-                        if (error.response.status == 422) {
-                            this.errors = error.response.data.errors
+                    this.myCroppaWatermark.generateBlob((blobWatermark) => {
+
+                        if (blobWatermark) {
+                            data.append('watermark', blobWatermark)
                         }
-                    })
+                        
+                        data.append('reason_preventive_maintenance_report_digital', this.company.reason_preventive_maintenance_report_digital)
+                        data.append('complement_title', this.company.complement_title ? this.company.complement_title : '');
+                        
+                        this.$http.post(`company`, data).then( response => {
+                            this.getCompanyParameters()
+                            this.$toastr.success('Datos actualizados')
+                            this.saving = false
+                            this.errors = {}
+                            this.myCroppa.remove()
+                            this.myCroppaWatermark.remove()
+                        }).catch(error => {
+                            this.saving = false
+                            if (error.response.status == 422) {
+                                this.errors = error.response.data.errors
+                            }
+                        })
+                    }, 'image/jpeg', 0.8)
+
                     
                 }, 'image/jpeg', 0.8) // 80% compressed jpeg file
 

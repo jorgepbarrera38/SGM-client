@@ -88,7 +88,7 @@
                 })
             },
             showEvidence (evidence) {
-                this.evidence = `${this.$serverFiles}/${ evidence }`
+                this.evidence = `${this.$serverFiles}${ evidence }`
                 $('#modalFullHeight').modal('show')
             }
         },

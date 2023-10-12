@@ -70,6 +70,9 @@ import FailureModeEdit from '../views/main/failure_modes/Edit.vue'
 
 import DevicePhotographicRecordUpdate from '../views/main/devices/photographic_record/Index.vue'
 
+import ChecklistIndex from '../views/main/checklists/Index.vue'
+import ChecklistEdit from '../views/main/checklists/Edit.vue'
+
 Vue.use(VueRouter)
 
 const routes = [
@@ -382,6 +385,16 @@ const routes = [
         path: 'modos-de-falla/:id/editar',
         name: 'failureModes.edit',
         component: FailureModeEdit
+      },
+      {
+        path: 'listas-de-chequeo',
+        name: 'checklists.index',
+        component: ChecklistIndex
+      },
+      {
+        path: 'listas-de-chequeo/:id/editar',
+        name: 'checklists.edit',
+        component: ChecklistEdit
       },
     ]
   }

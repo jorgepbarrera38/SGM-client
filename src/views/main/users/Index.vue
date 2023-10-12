@@ -33,7 +33,7 @@
                                             </div>
                                         </td>
                                         <td>
-                                            <img class="img-fluid" :src="`${ $serverFiles }/${ user.signature }`" width="50" v-if="user.signature">
+                                            <img class="img-fluid" :src="`${ $serverFiles }${ user.signature }`" width="50" v-if="user.signature">
                                         </td>
                                         <th>
                                             <router-link class="btn btn-warning btn-sm" :to="{ name: 'users.edit', params: { id: user.id } }" style="margin-right:3px">

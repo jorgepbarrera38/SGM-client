@@ -44,11 +44,14 @@ let production = false
 
 if (production) {
   axios.defaults.baseURL = 'api'
-  Vue.prototype.$serverFiles = ''
 } else {
   axios.defaults.baseURL = 'http://127.0.0.1:8000/api'
-  Vue.prototype.$serverFiles = 'http://localhost:8000'
 }
+
+axios.get('parameters').then( response => {
+  Vue.prototype.$serverFiles = response.data.APP_URL
+  console.log(Vue.prototype.$serverFiles)
+})
 
 require('toastr/build/toastr.min.css')
 

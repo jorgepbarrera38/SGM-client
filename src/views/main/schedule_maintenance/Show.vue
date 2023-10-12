@@ -33,13 +33,24 @@
                         <strong>Pendientes:</strong> {{ quantityScheduleMaintenanceDetailsPending }} -
                         <strong>Ejecutado:</strong> {{ isNaN(percentageMade) ? 0 : percentageMade }}%
 
-                        <button class="btn btn-success btn-sm float-right" @click="exportReportExcel" title="Exportar cronograma de mantenimiento">
-                            <div class="spinner-border spinner-border-sm" role="status" v-if="downloadingExcel">
-                                <span class="sr-only">Loading...</span>
-                            </div>
-                            <i class="fa fa-file-excel" v-else></i>
-                            Exportar
-                        </button>
+                        <div class="float-right">
+                            <button class="btn btn-success btn-sm mr-1" @click="exportReportExcel" title="Exportar cronograma de mantenimiento">
+                                <div class="spinner-border spinner-border-sm" role="status" v-if="downloadingExcel">
+                                    <span class="sr-only">Loading...</span>
+                                </div>
+                                <i class="fa fa-file-excel" v-else></i>
+                                Exportar
+                            </button>
+                            <button class="btn btn-danger btn-sm" @click="exportReportPdf">
+                                <div class="spinner-border spinner-border-sm" role="status" v-if="downloadingPdf">
+                                    <span class="sr-only">Loading...</span>
+                                </div>
+                                <i class="fa fa-file-pdf" v-else></i>
+                                Exportar
+                            </button>
+
+                        </div>
+
                         <vue-loading v-if="loading" type="spin" color="#d9544e" :size="{ width: '50px', height: '50px' }"></vue-loading>
                         <div v-else style="margin-top:25px">
                             <div class="form-row">
@@ -139,10 +150,14 @@
                                                     @click="showRecordScheduleMaintenances(scheduleMaintenanceDetail.record_schedule_maintenances)">
                                                     <i class="fa fa-calendar-alt"></i>
                                                 </button>
-                                                <button class="btn btn-primary btn-sm" title="Evidencia" 
+                                                <button class="btn btn-primary btn-sm" title="Evidencia" :disabled="scheduleMaintenanceDetail.gettingEvidence"
                                                     v-if="scheduleMaintenanceDetail.preventive_maintenance"
-                                                    @click="showEvidence(scheduleMaintenanceDetail.preventive_maintenance.evidence)">
-                                                    <i class="fa fa-eye"></i>
+                                                    @click="showEvidenceFromPreventiveMaintenance(scheduleMaintenanceDetail)">
+                                                    <div class="spinner-border spinner-border-sm" role="status" 
+                                                        v-if="scheduleMaintenanceDetail.gettingEvidence">
+                                                        <span class="sr-only">Loading...</span>
+                                                    </div>
+                                                    <i class="fa fa-eye" v-else></i>
                                                 </button>
                                             </td>
                                         </tr>
@@ -296,6 +311,7 @@
                 evidence: '',
                 loading: true,
                 downloadingExcel: false,
+                downloadingPdf: false,
                 months: [],
                 record_schedule_maintenances: [],
                 updating: false,
@@ -315,6 +331,7 @@
                     this.scheduleMaintenance.schedule_maintenance_details.forEach(schedule_maintenance_detail => {
                         this.$set(schedule_maintenance_detail, 'editDateToReprogram', false)
                         this.$set(schedule_maintenance_detail, 'newDateReprogrammer', '')
+                        this.$set(schedule_maintenance_detail, 'gettingEvidence', false)
                     })
                     this.setMonths()
                     this.loading = false
@@ -327,9 +344,17 @@
             convertDateHuman (date) {
                 return this.$moment(date).format('DD[-]MMMM[-]Y')
             },
-            showEvidence (evidence) {
-                this.evidence = `${this.$serverFiles}/${ evidence }`
-                $('#modalFullHeight').modal('show')
+            showEvidenceFromPreventiveMaintenance (scheduleMaintenanceDetail) {
+                scheduleMaintenanceDetail.gettingEvidence = true
+                this.$http.get(`preventive-maintenances/${ scheduleMaintenanceDetail.preventive_maintenance.id }/get-evidence-from-preventive-maintenance`, { responseType: 'blob' }).then( response => {
+                    const evidence = URL.createObjectURL(response.data)
+                    this.evidence = evidence
+                    $('#modalFullHeight').modal('show')
+                    scheduleMaintenanceDetail.gettingEvidence = false
+                }).catch( errors => {
+                    scheduleMaintenanceDetail.gettingEvidence = false
+                    this.$toastr.error('El archivo no se pudo generar')
+                })
             },
             exportReportExcel () {
                 this.downloadingExcel = true
@@ -338,6 +363,16 @@
                     download(response.data, "Cronograma-de-mantenimiento.xlsx", "blob");
                 }).catch(error => {
                     this.downloadingExcel = false
+                    this.$toastr.error('Error al descargar el reporte')
+                })
+            },
+            exportReportPdf () {
+                this.downloadingPdf = true
+                 this.$http.get(`schedule-maintenances/${ this.$route.params.id }/export-pdf`, { responseType: 'blob' }).then( response => {
+                    this.downloadingPdf = false
+                    download(response.data, "Mantenimientos.pdf", "blob");
+                }).catch(error => {
+                    this.downloadingPdf = false
                     this.$toastr.error('Error al descargar el reporte')
                 })
             },

@@ -10,6 +10,14 @@
                     <div class="card-body">
                         <div>
                             
+                            <div class="alert alert-success" v-if="existsPreviousPreventiveMaintenance">
+                                <li>
+                                    Existe un borrador previamente guardado
+                                    <button class="btn btn-sm btn-danger mr-1" @click="discardSketch">Descartar</button>
+                                    <button class="btn btn-sm btn-primary" @click="restoreSketch">Restaurar</button>
+                                </li>
+                            </div>
+
                             <div class="alert alert-danger" v-show="Object.keys(errors).length > 0 ? true : false">
                                 <li v-for="(error, index) in errors" :key="`error-${index}`">
                                     {{ error[0] }}
@@ -47,8 +55,14 @@
                                 </div>
                                 <div class="col-md-12" v-if="preventive_maintenance.type_report == 1">
                                     <div class="form-group">
+                                        <label for="">Motivo</label>
+                                        <textarea rows="3" class="form-control" v-model="preventive_maintenance.reason" maxlength="600"></textarea>
+                                    </div>
+                                </div>
+                                <div class="col-md-12" v-if="preventive_maintenance.type_report == 1">
+                                    <div class="form-group">
                                         <label for="">Descripción del soporte</label>
-                                        <textarea rows="3" class="form-control" v-model="preventive_maintenance.conclusion" maxlength="400"></textarea>
+                                        <textarea rows="3" class="form-control" v-model="preventive_maintenance.support_description" maxlength="10000"></textarea>
                                     </div>
                                 </div>
                             </div>
@@ -80,7 +94,10 @@
                                             :prevent-white-space="true"
                                             >
                                         </croppa>
-                                        <input type="text" class="form-control mb-2" v-model="myCroppaDescription" placeholder="Descripción" maxlength="50">
+                                        <input type="text" class="form-control mb-2" v-model="myCroppaDescription" placeholder="Descripción" maxlength="250">
+                                         <button @click="myCroppa.rotate()" class="btn btn-secondary btn-sm mr-1">
+                                             <i class="fa fa-sync"></i>
+                                         </button>
                                         <a href="#" class="btn btn-primary btn-sm" @click.prevent="uploadImage">
                                             <i class="fa fa-upload"></i> Agregar
                                         </a>
@@ -95,11 +112,11 @@
                                         <th></th>
                                     </thead>
                                     <tbody>
-                                        <tr v-for="(image, index) in photographicAnnexes" :key="'image-' + index">
-                                            <td><img width="110" :src="image.image" alt="" ></td>
+                                        <tr v-for="(image, index) in preventive_maintenance.photographicAnnexes" :key="'image-' + index">
+                                            <td><img width="110" :src="image.imageLocal" alt="" ></td>
                                             <td>{{ image.description }}</td>
                                             <td>
-                                                <button class="btn btn-danger btn-sm" @click="photographicAnnexes.splice(index, 1)">
+                                                <button class="btn btn-danger btn-sm" @click="preventive_maintenance.photographicAnnexes.splice(index, 1)">
                                                     <i class="fa fa-trash-alt"></i> Eliminar
                                                 </button>
                                             </td>
@@ -161,6 +178,100 @@
                 </div>
             </div>
 
+             <!--Listas de chequeo-->
+            <div class="col-md-12 mb-2" v-if="preventive_maintenance.type_report == 1">
+                <div class="card">
+                    <div class="card-header">
+                        Listas de chequeo
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <form class="form-inline" @submit.prevent="addChecklist">
+                                    <div class="form-group mr-sm-3 mb-2">
+                                        <select class="form-control" v-model="checkListSelected">
+                                            <option :value="{}">Seleccione lista de chequeo</option>
+                                            <option :value="checklist" v-for="checklist in checklists" :key="checklist.id">{{ checklist.name }}</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary mb-2">
+                                        <i class="fa fa-plus"></i> Agregar
+                                    </button>
+                                </form>
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-sm">
+                                        <thead>
+                                            <th>Lista de chequeo</th>
+                                            <th></th>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-for="(checklist, index) in preventive_maintenance.checklists" :key="`checklist-to-manage-${ index }`">
+                                                <td>{{ checklist.name }}</td>
+                                                <td>
+                                                    <a href="#" class="btn btn-success btn-sm mr-1" @click.prevent="fillChecklist(checklist)">
+                                                        <i class="fa fa-pen"></i> Diligenciar
+                                                    </a>
+                                                    <a href="#" class="btn btn-danger btn-sm" @click.prevent="deleteChecklist(index)">
+                                                        <i class="fa fa-trash-alt"></i> Eliminar
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <!-- Modal diligenciar lista de chequeo-->
+                                <div class="modal fade" id="checklistModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog" role="document">
+                                        <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="exampleModalLabel">Diligenciar lista de chequeo</h5>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <!--<h5>{{ checkListSelectedItems.name }}</h5>-->
+                                            <div v-for="checklist_group in checkListSelectedItems.checklist_groups" :key="'check' + checklist_group.id">
+                                                <h5><strong>{{ checklist_group.name }}</strong></h5>
+                                                <div class="table-responsive">
+                                                    <table class="table table-hover table-sm">
+                                                        <thead>
+                                                            <th>Descripción</th>
+                                                            <th>C</th>
+                                                            <th>NC</th>
+                                                            <th>NA</th>
+                                                            <th></th>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr v-for="item in checklist_group.checklist_items" :key="'item-check' + item.id">
+                                                                <td>{{ item.description }}</td>
+                                                                <td>
+                                                                    <input type="radio" v-model="item.response" value="C">
+                                                                </td>
+                                                                <td>
+                                                                    <input type="radio" v-model="item.response" value="NC">
+                                                                </td>
+                                                                <td>
+                                                                    <input type="radio" v-model="item.response" value="NA">
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                                        </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
              <!--Verificación de lo ejecutado-->
             <div class="col-md-12 mb-2">
                 <div class="card">
@@ -174,13 +285,13 @@
                                 <div class="col-md-6" v-if="preventive_maintenance.type_report == 1">
                                     <div class="form-group">
                                         <label for="">Funcionario</label>
-                                        <input type="text" class="form-control" v-model="preventive_maintenance.official_names" maxlength="50">
+                                        <input type="text" class="form-control" v-model="preventive_maintenance.official_names" maxlength="70">
                                     </div>
                                 </div>
                                 <div class="col-md-6" v-if="preventive_maintenance.type_report == 1">
                                     <div class="form-group">
                                         <label for="">Cargo</label>
-                                        <input type="text" class="form-control" v-model="preventive_maintenance.official_position" maxlength="30">
+                                        <input type="text" class="form-control" v-model="preventive_maintenance.official_position" maxlength="40">
                                     </div>
                                 </div>
                                 <div class="col-md-6 offset-md-3" v-if="preventive_maintenance.type_report == 1">
@@ -205,6 +316,9 @@
                                     <button @click="save" class="btn btn-primary btn-sm mr-1" :disabled="!hasPermission('preventive-maintenances.create')">
                                         <i class="fa fa-save"></i> Guardar
                                     </button>
+                                    <button @click="saveSketch" class="btn btn-secondary btn-sm mr-1">
+                                        <i class="fa fa-archive"></i> Guardar borrador
+                                    </button>
                                     <a href="#" class="btn btn-danger btn-sm" @click.prevent="$router.go(-1)"><i class="fa fa-times-circle"></i> Cancelar</a>
                                 </div>
                             </div>
@@ -220,6 +334,7 @@
     import hasPermission from '../../_utilities/hasPermission'
     import { VueLoading } from 'vue-loading-template'
     import vueSignature from 'vue-signature'
+    import AnimateScroll from 'js-animate-scroll'
     export default {
         name: 'devices.movements.create',
         components: {
@@ -227,6 +342,18 @@
         },
         created () {
             this.getDataToCreatePreventiveMaintenance()
+            var options = {
+                duration: 200,
+                easing: 'linear',
+                padding: -500,
+                align: 'top',
+                onFinish: function () {}
+            };
+            new AnimateScroll('#errors-validation', options)
+            
+            if (localStorage.getItem('preventive_maintenance_temp')) {
+                this.existsPreviousPreventiveMaintenance = true
+            }
         },
         mixins: [ hasPermission ],
         data() {
@@ -235,52 +362,97 @@
                     type_report: 1,
                     date_of_realization: '',
                     date_of_realization_ending: '',
+                    reason: '',
+                    support_description: '',
                     evidence: '',
                     official_names: '',
                     official_position: '',
-                    conclusion: '',
-                    replacements: []
+                    replacements: [],
+                    checklists: [],
+                    photographicAnnexes: [],
                 },
                 myCroppa: {},
                 myCroppaDescription: '',
-                photographicAnnexes: [],
                 replacements: [],
                 replacementSelected: {},
                 replacementQuantity: '',
+                checklists: [],
+                checkListSelected: {},
+                checkListSelectedItems: {},
                 saving: false,
                 errors: {},
                 option:{
                     penColor:"rgb(0, 0, 0)"
-                }
+                },
+                existsPreviousPreventiveMaintenance: false
             }
         },
         methods: {
             uploadImage () {
-                let image = this.myCroppa.generateDataUrl('image/jpeg')
 
-                if (!image) {
+                if (!this.myCroppa.hasImage()) {
                     return this.$toastr.error('Seleccione la imagen')
                 }
+                
+                this.myCroppa.generateBlob((blob) => {
+                    var image = URL.createObjectURL(blob)
 
-                if (!this.myCroppaDescription) {
-                    return this.$toastr.error('Ingrese la descripción de la imagen')
-                }
+                    if (!this.myCroppaDescription) {
+                        return this.$toastr.error('Ingrese la descripción de la imagen')
+                    }
 
-                this.photographicAnnexes.push({
-                    description: this.myCroppaDescription,
-                    image
+                    this.preventive_maintenance.photographicAnnexes.push({
+                        description: this.myCroppaDescription,
+                        image: blob,
+                        imageLocal: image
+                    })
+
+                    this.myCroppa.remove()
+                    this.myCroppaDescription = ''
                 })
-
-                this.myCroppa.remove()
-                this.myCroppaDescription = ''
             },
             getDataToCreatePreventiveMaintenance () {
                 this.$http.get(`preventive-maintenances/${ this.$route.params.id }/get-data-to-create-preventive-maintenance`).then(response => {
-                    this.preventive_maintenance.conclusion = response.data.conclusion
+                    this.preventive_maintenance.reason = response.data.reason
+                    this.preventive_maintenance.support_description = response.data.support_description
                     this.replacements = response.data.replacements
+                    this.checklists = response.data.checklists
+                    this.checklists.forEach(checklist => {
+                        checklist.checklist_groups.forEach(checklist_group => {
+                            checklist_group.checklist_items.forEach(checklist_item => {
+                                this.$set(checklist_item, 'response', '')
+                            })
+
+                        })
+                    })
                 })
             },
             save () {
+                //Verificando si tiene checklist para validar que los haya diligenciado
+                let hasErrorInCheckList = false
+                let message = ''
+                var BreakException = {}
+                try {
+                    if (this.preventive_maintenance.checklists.length) {
+                        this.preventive_maintenance.checklists.forEach(checklist => {
+                            checklist.checklist_groups.forEach(checklist_group => {
+                                checklist_group.checklist_items.forEach(checklist_item => {
+                                    if (checklist_item.response != 'C' && checklist_item.response != 'NC' && checklist_item.response != 'NA') {
+                                        hasErrorInCheckList = true   
+                                        message = 'Hay ítems sin diligenciar en la lista de chequeo: ' + checklist.name
+                                        throw BreakException
+                                    }
+                                })
+                            })
+                        })
+                    }
+                } catch (error) {
+                }
+
+                if (hasErrorInCheckList) {
+                    return this.$toastr.error(message)
+                }
+
                 this.saving = true
 
                 let data = new FormData
@@ -288,9 +460,10 @@
                 data.append('date_of_realization_ending', this.preventive_maintenance.date_of_realization_ending)
                 data.append('evidence', this.preventive_maintenance.evidence)
                 data.append('type_report', this.preventive_maintenance.type_report)
-                data.append('conclusion', this.preventive_maintenance.conclusion)
+                data.append('reason', this.preventive_maintenance.reason)
+                data.append('support_description', this.preventive_maintenance.support_description)
                 data.append('replacementsInJson', JSON.stringify(this.preventive_maintenance.replacements))
-                this.photographicAnnexes.forEach((image, index) => {
+                this.preventive_maintenance.photographicAnnexes.forEach((image, index) => {
                     data.append(`photographicAnnexes[${index}][description]`, image.description)
                     data.append(`photographicAnnexes[${index}][image]`, image.image)
                 })
@@ -303,18 +476,30 @@
                     var _this = this
                     var png = _this.$refs.signature.save()
                     data.append('signature', png)
+
+                    data.append('checklists', JSON.stringify(this.preventive_maintenance.checklists))
+
                     data.append('official_names', this.preventive_maintenance.official_names)
                     data.append('official_position', this.preventive_maintenance.official_position)
+
+
                 }
 
                 this.$http.post(`preventive-maintenances/${ this.$route.params.id }`, data).then( response => {
-                    this.saving = false
                     this.$toastr.success('Mantenimiento preventivo registrado')
                     this.$router.go(-1)
                 }).catch(error => {
                     this.saving = false
                     if (error.response.status == 422) {
                         this.errors = error.response.data.errors
+                        var options = {
+                            duration: 200,
+                            easing: 'linear',
+                            padding: -500,
+                            align: 'top',
+                            onFinish: function () {}
+                        };
+                        new AnimateScroll('#errors-validation', options)
                     }
                 })
             },
@@ -359,6 +544,44 @@
             deleteReplacement (replacement) {
                 this.preventive_maintenance.replacements.splice(replacement, 1)
             },
+            addChecklist () {
+                if (Object.keys(this.checkListSelected).length == 0) {
+                    return this.$toastr.error('Seleccione lista de chequeo')
+                }
+
+                let checklistIsTheList = this.preventive_maintenance.checklists.some(checklist => checklist.id == this.checkListSelected.id)
+
+                if (checklistIsTheList) {
+                    return this.$toastr.error('Lista de chequeo ya se encuentra agregada')
+                }
+
+                this.preventive_maintenance.checklists.push({ id: this.checkListSelected.id, name: this.checkListSelected.name, checklist_groups: this.checkListSelected.checklist_groups })
+
+                this.checkListSelected = {}
+            },
+            fillChecklist (checklist) {
+                this.checkListSelectedItems = checklist
+                $('#checklistModal').modal('show')
+            },
+            deleteChecklist (index) {
+                this.preventive_maintenance.checklists.splice(index, 1)
+            },
+            restoreSketch () {
+                this.preventive_maintenance = JSON.parse(localStorage.getItem('preventive_maintenance_temp'))
+                this.preventive_maintenance.photographicAnnexes = []
+                this.preventive_maintenance.evidence = ''
+                localStorage.removeItem('preventive_maintenance_temp')
+                this.existsPreviousPreventiveMaintenance = false
+                this.$toastr.success('Borrador restaurado')
+            },
+            discardSketch () {
+                localStorage.removeItem('preventive_maintenance_temp')
+                this.existsPreviousPreventiveMaintenance = false
+            },
+            saveSketch () {
+                localStorage.setItem('preventive_maintenance_temp', JSON.stringify(this.preventive_maintenance))
+                this.$toastr.success('Borrador guardado')
+            }
         },
     }
 </script>

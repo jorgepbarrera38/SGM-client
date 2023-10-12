@@ -17,7 +17,7 @@
                         </div>
                     </div>
                     <div class="card-body">
-                        <img class="img-fluid" :src="`${ $serverFiles }/${device.photoPrincipal.photo}`" alt="" v-if="device.photoPrincipal">
+                        <img class="img-fluid" :src="`${ $serverFiles }${device.photoPrincipal.photo}`" alt="" v-if="device.photoPrincipal">
                     </div>
                 </div>
                 <div class="card mb-3">
@@ -56,10 +56,14 @@
                                     @click="hasPermission('devices.down') ? $router.push({ name: 'devices.down.create' }) : ''">
                                     <input type="radio" name="options" id="option3" autocomplete="off"> <i class="fa fa-trash-alt"></i> Dar de baja
                                 </label>
-                                <!--<label :class="{ btn: true, 'btn-info': true, 'btn-sm': true, disabled: !hasPermission('devices.down') }" 
+                                <label :class="{ btn: true, 'btn-info': true, 'btn-sm': true, disabled: false }"
                                     @click.prevent="showResume()">
-                                    <input type="radio" name="options" id="option3" autocomplete="off"> <i class="fa fa-trash-alt"></i> HOJA
-                                </label>-->
+                                    <input type="radio" name="options" id="option3" autocomplete="off"> 
+                                    <div class="spinner-border spinner-border-sm" role="status" v-if="gettingResume">
+                                        <span class="sr-only">Loading...</span>
+                                    </div>
+                                    <i class="fa fa-copy" v-else></i> Resumen
+                                </label>
                             </div>
                         </div>
                     </div>
@@ -97,7 +101,7 @@
                         <strong>Marca:</strong> {{ device.brand.name }} <br>
                         <strong>Modelo:</strong> {{ device.model }} <br> <br>
                         <strong>Descripción:</strong> <div class="text-justify">{{ device.description }}</div> <br> <br>
-                        <strong>Observaciónes:</strong> <div class="text-justify">{{ device.observations }}</div> <br> <br>
+                        <strong>Observaciones:</strong> <div class="text-justify">{{ device.observations }}</div> <br> <br>
 
                         <strong>Inicio de operación:</strong> {{ convertDate(device.start_operation) }} <br>
                         <strong>Fecha fin de garantía:</strong> {{ convertDate(device.date_end_guarantee) }} <br>
@@ -207,6 +211,7 @@
                         <div class="table-responsive limit-table">
                             <table class="table table-hover table-sm">
                                 <thead>
+                                    <th>Tipo</th>
                                     <th nowrap>Fecha y hora inicio</th>
                                     <th nowrap>Fecha y hora fin</th>
                                     <th>Técnico</th>
@@ -214,18 +219,23 @@
                                 </thead>
                                 <tbody>
                                     <tr v-for="preventiveMaintenance in device.preventive_maintenances" :key="`preventive-${ preventiveMaintenance.id }`">
+                                        <td nowrap>{{ preventiveMaintenance.type }}</td>
                                         <td nowrap>{{ convertDate(preventiveMaintenance.date_of_realization) }}</td>
                                         <td nowrap>{{ convertDate(preventiveMaintenance.date_of_realization_ending) }}</td>
                                         <td nowrap>{{ preventiveMaintenance.user.names }}</td>
                                         <td nowrap>
                                                 <button class="btn btn-secondary btn-sm pl-3 pr-3 mr-1" title="Información" 
-                                                    @click="showReplacements(preventiveMaintenance.replacement_maintenancables)">
+                                                    @click="showReplacements(preventiveMaintenance.replacements)">
                                                     <i class="fa fa-info"></i>
                                                 </button>
-                                                <a href="#" class="btn btn-primary btn-sm mr-1" title="Evidencia" 
-                                                    @click.prevent="showEvidence(preventiveMaintenance.evidence)">
-                                                    <i class="fa fa-eye"></i>
-                                                </a>
+                                                <button class="btn btn-primary btn-sm mr-1" title="Evidencia" :disabled="preventiveMaintenance.gettingEvidence"
+                                                    @click.prevent="showEvidenceFromPreventiveMaintenance(preventiveMaintenance)">
+                                                    <div class="spinner-border spinner-border-sm" role="status" 
+                                                        v-if="preventiveMaintenance.gettingEvidence">
+                                                        <span class="sr-only">Loading...</span>
+                                                    </div>
+                                                    <i class="fa fa-eye" v-else></i>
+                                                </button>
                                                 <button class="btn btn-warning btn-sm mr-1" title="Editar" v-if="device.active" :disabled="!hasPermission('preventive-maintenances.edit')"
                                                     @click="$router.push({ name: 'devices.preventive_maintenances.edit', params: { idPreventiveMaintenance: preventiveMaintenance.id } })">
                                                     <i class="fa fa-edit"></i>
@@ -255,6 +265,7 @@
                         <div class="table-responsive limit-table">
                             <table class="table table-hover table-sm">
                                 <thead>
+                                    <th>Tipo</th>
                                     <th nowrap>Fecha y hora inicio</th>
                                     <th nowrap>Fecha y hora fin</th>
                                     <th>Clasificación</th>
@@ -263,6 +274,7 @@
                                 </thead>
                                 <tbody>
                                     <tr v-for="other_maintenance in device.other_maintenances" :key="`other-maint-${ other_maintenance.id }`">
+                                        <td nowrap>{{ other_maintenance.type }}</td>
                                         <td nowrap>{{ convertDate(other_maintenance.date_of_realization) }}</td>
                                         <td nowrap>{{ convertDate(other_maintenance.date_of_realization_ending) }}</td>
                                         <td nowrap>{{ other_maintenance.type_other_maintenance.name }}</td>
@@ -270,12 +282,16 @@
                                         <td nowrap>
                                             <div class="float-right">
                                                 <button class="btn btn-secondary btn-sm pl-3 pr-3 mr-1" title="Información" 
-                                                    @click="showReplacements(other_maintenance.replacement_maintenancables, other_maintenance.reason, other_maintenance.conclusion)">
+                                                    @click="showReplacements(other_maintenance.replacements, other_maintenance.reason, other_maintenance.support_description)">
                                                     <i class="fa fa-info"></i>
                                                 </button>
-                                                <button class="btn btn-primary btn-sm mr-1" title="Evidencia" 
-                                                    @click="showEvidence(other_maintenance.evidence)">
-                                                    <i class="fa fa-eye"></i>
+                                                <button class="btn btn-primary btn-sm mr-1" title="Evidencia" :disabled="other_maintenance.gettingEvidence"
+                                                    @click="showEvidenceFromOtherMaintenance(other_maintenance)">
+                                                    <div class="spinner-border spinner-border-sm" role="status" 
+                                                        v-if="other_maintenance.gettingEvidence">
+                                                        <span class="sr-only">Loading...</span>
+                                                    </div>
+                                                    <i class="fa fa-eye" v-else></i>
                                                 </button>
                                                 <button class="btn btn-warning btn-sm mr-1" title="Editar" v-if="device.active" :disabled="!hasPermission('other-maintenances.edit')"
                                                     @click="$router.push({ name: 'devices.other_maintenances.edit', params: { idOtherMaintenance: other_maintenance.id } })">
@@ -308,9 +324,9 @@
                                 <strong>Motivo</strong>
                                 <p class="text-justify">{{ reason }}</p>
                             </div>
-                            <div class="form-group" v-if="conclusion">
-                                <strong>Conclusión</strong>
-                                <p class="text-justify">{{ conclusion }}</p>
+                            <div class="form-group" v-if="support_description">
+                                <strong>Descripción del soporte</strong>
+                                <p class="text-justify">{{ support_description }}</p>
                             </div>
                             <div class="table-responsive">
                                 <table class="table table-hover table-sm">
@@ -385,6 +401,7 @@
     import { VueLoading } from 'vue-loading-template'
     import ModalFullHeight from '../components/ModalFullHeight'
     import VueGallerySlideshow from 'vue-gallery-slideshow';
+import LoginVue from '../../login/Login.vue';
 
     export default {
         name: 'devices.show',
@@ -422,12 +439,13 @@
                 },
                 replacements: [],
                 reason: '',
-                conclusion: '',
+                support_description: '',
                 evidence: '',
                 showFormForUpdateInternalCode: false,
                 newInternalCode: '',
                 updatingInternalCode: false,
                 loading: true,
+                gettingResume: false,
                 errors: {},
                 index: null,
             }
@@ -435,9 +453,17 @@
         methods: {
             getDevice () {
                 this.$http.get(`devices/${ this.$route.params.id }`).then( response => {
+                    response.data.preventive_maintenances.forEach(preventiveMaintenance => {
+                        this.$set(preventiveMaintenance, 'gettingEvidence', false)
+                    })
+
+                    response.data.other_maintenances.forEach(otherMaintenance => {
+                        this.$set(otherMaintenance, 'gettingEvidence', false)
+                    })
+
                     this.device = response.data
                     this.device.photoPrincipal = this.device.photographic_records.find( photographic_record => photographic_record.principal)
-                    this.device.photographic_records = this.device.photographic_records.map( photographic_record => `${ this.$serverFiles }/${photographic_record.photo}`)
+                    this.device.photographic_records = this.device.photographic_records.map( photographic_record => `${ this.$serverFiles }${photographic_record.photo}`)
                     this.loading = false
                 }).catch( error => {
                     if (error.response.status == 422) {
@@ -451,9 +477,14 @@
                     this.$toastr.success('Registro eliminado exitosamente')
                     this.getDevice()
                 }).catch( error => {
+                    if (error.response.status == 422) {
+                        this.$toastr.error(error.response.data.errors.message[0])
+                    }
+                    
                     if (error.response.status == 403) {
                         this.$toastr.error('Solo puede eliminar sus propios registros')
                     }
+
                     if (error.response.status == 404) {
                         this.$toastr.error('El registro no existe o ya fue eliminado')
                     }
@@ -472,14 +503,14 @@
                     }
                 })
             },
-            showReplacements (replacements, reason, conclusion) {
+            showReplacements (replacements, reason, support_description) {
                 this.replacements = replacements
                 this.reason = reason
-                this.conclusion = conclusion
+                this.support_description = support_description
                 $('#exampleModal').modal('show')
             },
             showEvidence (evidence) {
-                this.evidence = `${this.$serverFiles}/${ evidence }`
+                this.evidence = `${this.$serverFiles}${ evidence }`
                 $('#modalFullHeight').modal('show')
             },
             updateInternalCode () {
@@ -523,10 +554,39 @@
                 })
             },
             showResume () {
+                this.gettingResume = true
                 this.$http.get(`devices/${ this.$route.params.id }/get-resume`, { responseType: 'blob' }).then( response => {
                     const evidence = URL.createObjectURL(response.data)
                     this.evidence = evidence
                     $('#modalFullHeight').modal('show')
+                    this.gettingResume = false
+                }).catch( errors => {
+                    this.gettingResume = false
+                    this.$toastr.error('El archivo no se pudo generar')
+                })
+            },
+            showEvidenceFromPreventiveMaintenance (preventiveMaintenance) {
+                preventiveMaintenance.gettingEvidence = true
+                this.$http.get(`preventive-maintenances/${ preventiveMaintenance.id }/get-evidence-from-preventive-maintenance`, { responseType: 'blob' }).then( response => {
+                    const evidence = URL.createObjectURL(response.data)
+                    this.evidence = evidence
+                    $('#modalFullHeight').modal('show')
+                    preventiveMaintenance.gettingEvidence = false
+                }).catch( errors => {
+                    preventiveMaintenance.gettingEvidence = false
+                    this.$toastr.error('El archivo no se pudo generar')
+                })
+            },
+            showEvidenceFromOtherMaintenance (otherMaintenance) {
+                otherMaintenance.gettingEvidence = true
+                this.$http.get(`other-maintenances/${ otherMaintenance.id }/get-evidence-from-other-maintenance`, { responseType: 'blob' }).then( response => {
+                    const evidence = URL.createObjectURL(response.data)
+                    this.evidence = evidence
+                    $('#modalFullHeight').modal('show')
+                    otherMaintenance.gettingEvidence = false
+                }).catch( errors => {
+                    otherMaintenance.gettingEvidence = false
+                    this.$toastr.error('El archivo no se pudo generar')
                 })
             }
         },

@@ -113,7 +113,7 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="">Observaciónes (Opcional)</label>
+                                        <label for="">Observaciones (Opcional)</label>
                                         <textarea class="form-control" rows="3" v-model="device.observations" maxlength="300"></textarea>
                                     </div>
                                 </div>
@@ -221,6 +221,14 @@
                     this.saving = false
                     if (error.response.status == 422) {
                         this.errors = error.response.data.errors
+                        var options = {
+                            duration: 200,
+                            easing: 'linear',
+                            padding: -500,
+                            align: 'top',
+                            onFinish: function () {}
+                        };
+                        new AnimateScroll('#errors-validation', options)
                     }
                 })
             },

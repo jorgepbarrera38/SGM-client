@@ -17,7 +17,7 @@
                                 <div class="col-md-3">
                                     <div class="form-group">
                                         <label for="">Tipo</label>
-                                        <select class="form-control" v-model="other_maintenance.type_report">
+                                        <select class="form-control" v-model="other_maintenance.type_report" disabled>
                                             <option value="1">Digital</option>
                                             <option value="2">Físico</option>
                                         </select>
@@ -46,20 +46,21 @@
                                         </select>
                                     </div>
                                 </div>
-                                <div class="col-md-12">
+                                <div class="col-md-12" v-if="other_maintenance.type_report == 1">
                                     <div class="form-group">
                                         <label for="">Motivo</label>
-                                        <input type="text" class="form-control" v-model="other_maintenance.reason" maxlength="400">
+                                        <textarea rows="3" class="form-control" v-model="other_maintenance.reason" maxlength="600"></textarea>
                                     </div>
                                 </div>
-                                <div :class="{ 'col-md-6': other_maintenance.type_report == 2, 'col-md-12': other_maintenance.type_report == 1  }">
+                                <div class="col-md-12" v-if="other_maintenance.type_report == 1">
                                     <div class="form-group">
-                                        <label for="">Conclusión</label>
-                                        <input type="text" class="form-control" v-model="other_maintenance.conclusion" maxlength="400">
+                                        <label for="">Descripción del soporte</label>
+                                        <textarea rows="3" class="form-control" v-model="other_maintenance.support_description" maxlength="10000"></textarea>
                                     </div>
                                 </div>
-
-                                <div :class="{'col-md-6': other_maintenance.type_report == 2, 'col-md-12': other_maintenance.type_report == 1  }">
+<!--:class="{'col-md-6': other_maintenance.type_report == 2, 'col-md-12': other_maintenance.type_report == 1, 'col-md-12': other_maintenance.type_report == '' }">-->
+                                <!--<div class="col-md-6">-->
+                                    <div :class="other_maintenance.type_report == 2 ? 'col-md-6' : 'col-md-12'">
                                     <div class="form-group">
                                         <label for="">Modo de falla</label>
                                         <select class="form-control" v-model="other_maintenance.failure_mode_id">
@@ -106,7 +107,10 @@
                                             :prevent-white-space="true"
                                             >
                                         </croppa>
-                                        <input type="text" class="form-control mb-2" v-model="myCroppaDescription" placeholder="Descripción" maxlength="50">
+                                        <input type="text" class="form-control mb-2" v-model="myCroppaDescription" placeholder="Descripción" maxlength="250">
+                                        <button @click="myCroppa.rotate()" class="btn btn-secondary btn-sm mr-1">
+                                             <i class="fa fa-sync"></i>
+                                         </button>
                                         <a href="#" class="btn btn-primary btn-sm" @click.prevent="uploadImage">
                                             <i class="fa fa-upload"></i> Agregar
                                         </a>
@@ -122,7 +126,7 @@
                                     </thead>
                                     <tbody>
                                         <tr v-for="(image, index) in photographicAnnexes" :key="'image-' + index">
-                                            <td><img width="110" :src="image.image" alt="" ></td>
+                                            <td><img width="110" :src="image.imageLocal" alt="" ></td>
                                             <td>{{ image.description }}</td>
                                             <td>
                                                 <button class="btn btn-danger btn-sm" @click="photographicAnnexes.splice(index, 1)">
@@ -180,6 +184,101 @@
                                             </tr>
                                         </tbody>
                                     </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--Listas de chequeo-->
+            <div class="col-md-12 mb-2" v-if="other_maintenance.type_report == 1">
+                <div class="card">
+                    <div class="card-header">
+                        Listas de chequeo
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <form class="form-inline" @submit.prevent="addChecklist">
+                                    <div class="form-group mr-sm-3 mb-2">
+                                        <select class="form-control" v-model="checkListSelected">
+                                            <option :value="{}">Seleccione lista de chequeo</option>
+                                            <option :value="checklist" v-for="(checklist, index) in checklists" :key="'checklist-select-' + index">{{ checklist.name }}</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary mb-2">
+                                        <i class="fa fa-plus"></i> Agregar
+                                    </button>
+                                </form>
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-sm">
+                                        <thead>
+                                            <th>Lista de chequeo</th>
+                                            <th></th>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-for="(checklist, index) in other_maintenance.checklists" :key="`checklist-to-manage-${ index }`">
+                                                <td>{{ checklist.name }}</td>
+                                                <td>
+                                                    <a href="#" class="btn btn-success btn-sm mr-1" @click.prevent="fillChecklist(checklist)">
+                                                        <i class="fa fa-pen"></i> Diligenciar
+                                                    </a>
+                                                    <a href="#" class="btn btn-danger btn-sm" @click.prevent="deleteChecklist(index)">
+                                                        <i class="fa fa-trash-alt"></i> Eliminar
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <!-- Modal diligenciar lista de chequeo-->
+                                <div class="modal fade" id="checklistModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog" role="document">
+                                        <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="exampleModalLabel">Diligenciar lista de chequeo</h5>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <!--<h5>{{ checkListSelectedItems.name }}</h5>-->
+                                            <div v-for="(checklist_group, index) in checkListSelectedItems.checklist_groups" 
+                                                :key="'checklist-group-' + index">
+                                                <h5><strong>{{ checklist_group.name }}</strong></h5>
+                                                <div class="table-responsive">
+                                                    <table class="table table-hover table-sm">
+                                                        <thead>
+                                                            <th>Descripción</th>
+                                                            <th>C</th>
+                                                            <th>NC</th>
+                                                            <th>NA</th>
+                                                            <th></th>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr v-for="(item, index) in checklist_group.checklist_items" :key="'item-check-' + index">
+                                                                <td>{{ item.description }}</td>
+                                                                <td>
+                                                                    <input type="radio" v-model="item.response" value="C">
+                                                                </td>
+                                                                <td>
+                                                                    <input type="radio" v-model="item.response" value="NC">
+                                                                </td>
+                                                                <td>
+                                                                    <input type="radio" v-model="item.response" value="NA">
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                                        </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -248,6 +347,7 @@
     import { VueLoading } from 'vue-loading-template'
     import vueSignature from "vue-signature"
     import moment from 'moment'
+    import AnimateScroll from 'js-animate-scroll'
     export default {
         name: 'devices.other-maintenances.create',
         components: {
@@ -256,11 +356,19 @@
         created () {
             this.getOtherMaintenance()
             this.getDataToUpdateOtherMaintenance()
+            var options = {
+                duration: 200,
+                easing: 'linear',
+                padding: -500,
+                align: 'top',
+                onFinish: function () {}
+            };
+            new AnimateScroll('#errors-validation', options)
         },
         data() {
             return {
                 other_maintenance: {
-                    type_report: 1,
+                    type_report: '',
                     official_names: '',
                     official_position: '',
                     date_of_realization: '',
@@ -268,9 +376,10 @@
                     evidence: '',
                     type_maintenance_id: '',
                     reason: '',
-                    conclusion: '',
+                    support_description: '',
                     failure_mode_id: '',
-                    replacements: []
+                    replacements: [],
+                    checklists: [],
                 },
                 myCroppa: {},
                 myCroppaDescription: '',
@@ -279,6 +388,9 @@
                 failureModes: [],
                 replacements: [],
                 replacementSelected: {},
+                checklists: [],
+                checkListSelected: {},
+                checkListSelectedItems: {},
                 replacementQuantity: '',
                 saving: false,
                 errors: {},
@@ -289,33 +401,54 @@
         },
         methods: {
             uploadImage () {
-                let image = this.myCroppa.generateDataUrl('image/jpeg')
-
-                if (!image) {
+                
+                if (!this.myCroppa.hasImage()) {
                     return this.$toastr.error('Seleccione la imagen')
                 }
 
-                if (!this.myCroppaDescription) {
-                    return this.$toastr.error('Ingrese la descripción de la imagen')
-                }
+                this.myCroppa.generateBlob((blob) => {
+                    var image = URL.createObjectURL(blob)
 
-                this.photographicAnnexes.push({
-                    description: this.myCroppaDescription,
-                    image
+                    if (!this.myCroppaDescription) {
+                        return this.$toastr.error('Ingrese la descripción de la imagen')
+                    }
+
+                    this.photographicAnnexes.push({
+                        description: this.myCroppaDescription,
+                        image: blob,
+                        imageLocal: image
+                    })
+
+                    this.myCroppa.remove()
+                    this.myCroppaDescription = ''
                 })
-
-                this.myCroppa.remove()
-                this.myCroppaDescription = ''
             },
             getOtherMaintenance () {
                 this.$http.get(`other-maintenances/${ this.$route.params.idOtherMaintenance }`).then( response => {
+
+                    this.other_maintenance.checklists = response.data.checklists
+
+                    this.other_maintenance.type_report = response.data.type == 'Digital' ? 1 : 2
                     this.other_maintenance.date_of_realization = moment(response.data.date_of_realization).format('YYYY-MM-DDTHH:mm')
                     this.other_maintenance.date_of_realization_ending = moment(response.data.date_of_realization_ending).format('YYYY-MM-DDTHH:mm')
                     this.other_maintenance.type_maintenance_id = response.data.type_other_maintenance_id
                     this.other_maintenance.failure_mode_id = response.data.failure_mode_id
                     this.other_maintenance.reason = response.data.reason
-                    this.other_maintenance.conclusion = response.data.conclusion
-                    this.other_maintenance.replacements = response.data.replacement_maintenancables.map(replacement => {
+                    this.other_maintenance.support_description = response.data.support_description
+                    this.other_maintenance.official_names = response.data.official_names
+                    this.other_maintenance.official_position = response.data.official_position
+
+                    response.data.photographic_annexes.forEach(photographicAnnexe => {
+                        this.$http.post('preventive-maintenances/get-blob-from-photographic-annexe', { image: photographicAnnexe.image }, { responseType: 'blob' }).then( response => {
+                            this.photographicAnnexes.push({
+                                description: photographicAnnexe.description,
+                                image: response.data,
+                                imageLocal: this.$serverFiles + photographicAnnexe.image
+                            })
+                        })
+                    })
+
+                    this.other_maintenance.replacements = response.data.replacements.map(replacement => {
                         return {
                             quantity: replacement.quantity,
                             name: replacement.replacement.name,
@@ -329,6 +462,16 @@
                     this.typeMaintenances = response.data.typeOtherMaintenances
                     this.replacements = response.data.replacements
                     this.failureModes = response.data.failureModes
+                    this.checklists = response.data.checklists
+
+                    this.checklists.forEach(checklist => {
+                        checklist.checklist_groups.forEach(checklist_group => {
+                            checklist_group.checklist_items.forEach(checklist_item => {
+                                this.$set(checklist_item, 'response', '')
+                            })
+
+                        })
+                    })
                 })
             },
             addReplacement () {
@@ -370,6 +513,31 @@
                 this.other_maintenance.replacements.splice(replacement, 1)
             },
             save () {
+                //Verificando si tiene checklist para validar que los haya diligenciado
+                let hasErrorInCheckList = false
+                let message = ''
+                var BreakException = {}
+                try {
+                    if (this.other_maintenance.checklists.length) {
+                        this.other_maintenance.checklists.forEach(checklist => {
+                            checklist.checklist_groups.forEach(checklist_group => {
+                                checklist_group.checklist_items.forEach(checklist_item => {
+                                    if (checklist_item.response != 'C' && checklist_item.response != 'NC' && checklist_item.response != 'NA') {
+                                        hasErrorInCheckList = true   
+                                        message = 'Hay ítems sin diligenciar en la lista de chequeo: ' + checklist.name
+                                        throw BreakException
+                                    }
+                                })
+                            })
+                        })
+                    }
+                } catch (error) {
+                }
+
+                if (hasErrorInCheckList) {
+                    return this.$toastr.error(message)
+                }
+
                 this.saving = true
 
                 let data = new FormData //type_maintenance_id
@@ -378,7 +546,7 @@
                 data.append('date_of_realization_ending', this.other_maintenance.date_of_realization_ending)
                 data.append('type_maintenance_id', this.other_maintenance.type_maintenance_id)
                 data.append('reason', this.other_maintenance.reason)
-                data.append('conclusion', this.other_maintenance.conclusion)
+                data.append('support_description', this.other_maintenance.support_description)
                 data.append('failure_mode_id', this.other_maintenance.failure_mode_id)
                 data.append('evidence', this.other_maintenance.evidence)
                 data.append('replacementsInJson', JSON.stringify(this.other_maintenance.replacements))
@@ -398,6 +566,9 @@
                     var _this = this
                     var png = _this.$refs.signature.save()
                     data.append('signature', png)
+
+                    data.append('checklists', JSON.stringify(this.other_maintenance.checklists))
+                    
                     data.append('official_names', this.other_maintenance.official_names)
                     data.append('official_position', this.other_maintenance.official_position)
                 }
@@ -410,6 +581,14 @@
                     this.saving = false
                     if (error.response.status == 422) {
                         this.errors = error.response.data.errors
+                        var options = {
+                            duration: 200,
+                            easing: 'linear',
+                            padding: -500,
+                            align: 'top',
+                            onFinish: function () {}
+                        };
+                        new AnimateScroll('#errors-validation', options)
                     }
                     if (error.response.status == 403) {
                         this.$router.go(-1)
@@ -419,6 +598,28 @@
             },
             setFileInModel (e) {
                 this.other_maintenance.evidence = e.target.files[0]
+            },
+            addChecklist () {
+                if (Object.keys(this.checkListSelected).length == 0) {
+                    return this.$toastr.error('Seleccione lista de chequeo')
+                }
+
+                let checklistIsTheList = this.other_maintenance.checklists.some(checklist => checklist.name == this.checkListSelected.name)
+
+                if (checklistIsTheList) {
+                    return this.$toastr.error('Lista de chequeo ya se encuentra agregada')
+                }
+
+                this.other_maintenance.checklists.push({ id: this.checkListSelected.id, name: this.checkListSelected.name, checklist_groups: this.checkListSelected.checklist_groups })
+
+                this.checkListSelected = {}
+            },
+            fillChecklist (checklist) {
+                this.checkListSelectedItems = checklist
+                $('#checklistModal').modal('show')
+            },
+            deleteChecklist (index) {
+                this.other_maintenance.checklists.splice(index, 1)
             }
         },
     }

@@ -78,7 +78,6 @@
             },
             getResponsibles (page = 1, search = '') {
                 this.$http.get(`responsibles?page=${ page }&search=${ search }`).then( response => {
-                    console.log(response.data);
                     this.responsibles = response.data
                     this.loading = false
                 })

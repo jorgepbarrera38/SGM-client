@@ -68,20 +68,10 @@
                                 <div class="card-body">
                                     <div class="form-group">
 
-                                        <strong>Grupos</strong> <br>
-                                        <span v-for="group in groups" :key="`group-${ group.id }`" @click="selectDevicesFromThatGroup(item, group.id)">
-                                            <span v-if="thereAreDevicesFromThatGroup(item, group.id)">
-                                                <input type="checkbox" :id="`location-${ item.id }-group-${ group.id }`"> {{ group.name }}
-                                            </span>
-                                        </span>
-
-                                        <br>
-                                        <br>
-
                                         <strong>Elementos</strong> <br>
                                         <span v-for="element in elements" :key="`element-${ element.id }`" @click="selectDevices(item, element.id)">
                                             <span v-if="thereAreDevicesFromThatElement(item, element.id)">
-                                                <input type="checkbox" :id="`location-${ item.id }-element-${ element.id }`"> {{ element.name }}
+                                                <input type="checkbox" :id="`group-${ item.id }-element-${ element.id }`" :checked="false"> {{ element.name }}
                                             </span>
                                         </span>
                                     
@@ -92,20 +82,17 @@
                                             <table class="table table-sm table-hover">
                                                 <thead>
                                                     <th></th>
-                                                    <th>Grupo</th>
                                                     <th>Elemento</th>
                                                     <th>H.V</th>
                                                     <th>Placa</th>
                                                     <th>Serial</th>
+                                                    <th>Ubicación</th>
                                                     <th>Dependencia</th>
                                                 </thead>
                                                 <tbody>
                                                     <tr v-for="device in item.devices" :key="`device-${ device.id }`">
                                                         <td>
-                                                            <input type="checkbox" v-model="device.checked" class="mx-1">
-                                                        </td>
-                                                        <td>
-                                                            {{ device.group.name }}
+                                                            <input type="checkbox" v-model="device.checked" class="mx-1" @change="selectOrUnselectElement(item, device.element_id)">
                                                         </td>
                                                         <td>
                                                             {{ device.element.name }}
@@ -118,6 +105,9 @@
                                                         </td>
                                                         <td>
                                                             {{ device.serial_number }} 
+                                                        </td>
+                                                        <td>
+                                                            {{ device.location.name }}
                                                         </td>
                                                         <td>
                                                             {{ device.dependence.name }}
@@ -195,7 +185,7 @@
                                                 {{ device.dependence.name }}
                                             </td>
                                             <td nowrap>
-                                                <select name="" id="" class="form-control" v-model="device.month" style="width:130px">
+                                                <select name="" class="form-control" v-model="device.month" style="width:130px">
                                                     <option :value="{ name: '', date: '', state: '' }"></option>
                                                     <option :value="month" v-for="month in months" :key="`device-${ device.id }-month-for-select${ month.name }`">
                                                         {{ month.name }}
@@ -241,7 +231,6 @@
                 nameOfSchedule: '',
                 yearOfSchedule: '',
                 devicesSelected: [],
-                groups: [],
                 elements: [],
                 months: [],
                 devicesForMonth: 0,
@@ -256,80 +245,64 @@
                 let url = 'schedule-maintenances/get-data-to-create-schedule-maintenance'
 
                 this.$http.get(url).then( response => {
-                    this.groups = response.data[0]
                     this.elements = response.data[1]
                     this.dataToCreateScheduleMaintenance = response.data[2]
 
-                    this.dataToCreateScheduleMaintenance.forEach(location => {
-                        this.$set(location, 'added', false)
-                        location.devices.forEach( device => {
+                    this.dataToCreateScheduleMaintenance.forEach(group => {
+                        this.$set(group, 'added', false)
+                        group.devices.forEach( device => {
                             this.$set(device, 'checked', false)
                         })
-                    })                    
+                    })               
                 })
             },
-            selectAllDevices (location) {
+            selectAllDevices (group) {
                 //Checkea todos los dispositivos de esa ubicación
-                location.devices.forEach(device => {
+                group.devices.forEach(device => {
                     device.checked = true
-                })
-
-                //Busca el grupo para checkear y demostrar que todos los dispositivos de ese tipo están checkeados
-                this.groups.forEach( group => {
-                    let checkGroup = document.getElementById(`location-${ location.id }-group-${ group.id }`)
-                    if (checkGroup) {
-                        checkGroup.checked = true
-                    }
                 })
 
                 //Busca el elemento para checkear y demostrar que todos los dispositivos de ese tipo están checkeados
                 this.elements.forEach( element => {
-                    let checkElement = document.getElementById(`location-${ location.id }-element-${ element.id }`)
+                    let checkElement = document.getElementById(`group-${ group.id }-element-${ element.id }`)
                     if (checkElement) {
                         checkElement.checked = true
                     }
                 })
             },
-            unSelectAllDevices (location) {
+            unSelectAllDevices (group) {
                 //Des-checkea todos los dispositivos de esa ubicación
-                location.devices.forEach(device => {
+                group.devices.forEach(device => {
                     device.checked = false
-                })
-                //Busca el grupo para des-checkear y demostrar que todos los dispositivos de ese tipo están des-checkeados
-                this.groups.forEach( group => {
-                    let checkGroup = document.getElementById(`location-${ location.id }-group-${ group.id }`)
-                    if (checkGroup) {
-                        checkGroup.checked = false
-                    }
                 })
 
                 //Busca el elemento para des-checkear y demostrar que todos los dispositivos de ese tipo están des-checkeados
                 this.elements.forEach( element => {
-                    let checkElement = document.getElementById(`location-${ location.id }-element-${ element.id }`)
+                    let checkElement = document.getElementById(`group-${ group.id }-element-${ element.id }`)
                     if (checkElement) {
                         checkElement.checked = false
                     }
                 })
             },
-            addDevices (location) {
+            addDevices (group) {
                 //Verificando si se seleccionó almenos un dispositivo de la ubicación seleccionada 
                 //para agregar al cronograma
-                let result = location.devices.find(device => {
+                let result = group.devices.find(device => {
                     return device.checked == true
                 })
 
                 if (!result) {
-                    return this.$toastr.error(`No ha seleccionado ningún dispositivo para la ubicación: ${ location.name }`)
+                    return this.$toastr.error(`No ha seleccionado ningún dispositivo para el grupo: ${ group.name }`)
                 }
                 
                 //Cambia la propiedad a added a true para mostrar que los dispositivos seleccionados de esa
                 //ubicación ya se agregaron al listado del cronograma
-                location.added = true
+                group.added = true
 
                 //Recorre los dispositivos de la ubicación seleccionada y al que tiene
                 //la propiedad checked true lo agrega al listado de dispositivos seleccionados 
                 //para programar
-                location.devices.forEach( device => {
+                group.devices.forEach( device => {
                     if (device.checked == true) {
                         this.devicesSelected.push(device)
                     }
@@ -379,18 +352,18 @@
                     }
                 })
             },
-            deleteDevices (location) {
-                location.added = false
+            deleteDevices (group) {
+                group.added = false
 
                 this.devicesSelected = this.devicesSelected.filter( device => {
-                    return device.location_id != location.id
+                    return device.group_id != group.id
                 })
                 this.keysFromDeviceThatAreScheduled = []
                 this.assignMonthToDevices()
             },
-            selectDevices (location, elementId) {
-                let isCheckedElement = document.getElementById(`location-${ location.id }-element-${ elementId }`).checked
-                location.devices.forEach( device => {
+            selectDevices (group, elementId) {
+                let isCheckedElement = document.getElementById(`group-${ group.id }-element-${ elementId }`).checked
+                group.devices.forEach( device => {
                     if (device.element_id == elementId) {
                         if (isCheckedElement) {
                             device.checked = true
@@ -400,26 +373,9 @@
                     }
                 })
             },
-            selectDevicesFromThatGroup (location, groupId) {
-                let isCheckedGroup = document.getElementById(`location-${ location.id }-group-${ groupId }`).checked
-                location.devices.forEach( device => {
-                    if (device.group_id == groupId) {
-                        if (isCheckedGroup) {
-                            device.checked = true
-                        } else {
-                            device.checked = false
-                        }
-                    }
-                })
-            },
-            thereAreDevicesFromThatElement (location, elementId) {
-                return location.devices.find( device => {
+            thereAreDevicesFromThatElement (group, elementId) {
+                return group.devices.find( device => {
                     return device.element_id == elementId
-                })
-            },
-            thereAreDevicesFromThatGroup (location, groupId) {
-                return location.devices.find( device => {
-                    return device.group_id == groupId
                 })
             },
             save () {
@@ -508,6 +464,18 @@
                 this.showFormsForSchedule = false
                 this.errors = {}
                 this.getDataToCreateScheduleMaintenance()
+            },
+            selectOrUnselectElement (group, element_id) {
+                
+                let elementHasSelectedDevices = group.devices.some(device => {
+                    return device.checked == true && device.element_id == element_id
+                })
+
+                if(elementHasSelectedDevices) {
+                    document.getElementById(`group-${ group.id }-element-${ element_id }`).checked = true
+                } else {
+                    document.getElementById(`group-${ group.id }-element-${ element_id }`).checked = false
+                }
             }
         },
         watch: {

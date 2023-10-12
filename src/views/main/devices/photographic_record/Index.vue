@@ -49,7 +49,7 @@
                                 <tbody>
                                     <tr v-for="photo in photos" :key="photo.id">
                                         <td>
-                                            <img class="img-fluid" :src="`${$serverFiles}/${photo.photo}`" width="40">
+                                            <img class="img-fluid" :src="`${$serverFiles}${photo.photo}`" width="40">
                                         </td>
                                         <td>
                                             <i class="fa fa-check" v-if="photo.principal"></i>
@@ -137,7 +137,6 @@
                 photo.principal = true
 
                 this.$http.post(`devices/${ photo.id }/select-as-principal`).then( response => {
-                    console.log(response.data);
                     this.getPhotos()
                 })   
             }

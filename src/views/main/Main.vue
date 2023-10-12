@@ -40,6 +40,7 @@
                             <a :class="{ 'dropdown-item': true, disabled: !hasPermission('type-other-maintenances.index')}" href="#" @click.prevent="$router.push({ name: 'type_other_maintenances.index' })">Clasificación de servicios</a>
                             <a :class="{ 'dropdown-item': true, disabled: !hasPermission('replacements.index')}" href="#" @click.prevent="$router.push({ name: 'replacements.index' })">Repuestos y consumibles</a>
                             <a :class="{ 'dropdown-item': true, disabled: !hasPermission('failure-modes.index')}" href="#" @click.prevent="$router.push({ name: 'failureModes.index' })">Modos de falla</a>
+                            <a :class="{ 'dropdown-item': true, disabled: !hasPermission('checklists.index')}" href="#" @click.prevent="$router.push({ name: 'checklists.index' })">Listas de chequeo</a>
                             <div class="dropdown-divider"></div>
                             <a :class="{ 'dropdown-item': true, disabled: !hasPermission('periods.index')}" href="#" @click.prevent="$router.push({ name: 'periods.index' })">Periodos de mantenimiento</a>
                             <a :class="{ 'dropdown-item': true, disabled: !hasPermission('schedule-maintenance.index')}" href="#" @click.prevent="$router.push({ name: 'schedule_maintenance.index' })">Cronogramas de mantenimiento</a>
