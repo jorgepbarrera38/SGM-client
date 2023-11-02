@@ -21,11 +21,13 @@
                             <table class="table table-hover table-sm">
                                 <thead>
                                     <th>Nombre</th>
+                                    <th>Precio</th>
                                     <th></th>
                                 </thead>
                                 <tbody>
                                     <tr v-for="replacement in replacements.data" :key="replacement.id">
                                         <td>{{ replacement.name }}</td>
+                                        <td>{{ replacement.price }}</td>
                                         <th>
                                             <button class="btn btn-warning btn-sm" :disabled="!hasPermission('replacements.edit')" style="margin-right:3px"
                                                 @click="$router.push({ name: 'replacements.edit', params: { id: replacement.id } })">
@@ -75,6 +77,7 @@
             getReplacements (page = 1, search = '') {
                 this.$http.get(`replacements?page=${ page }&name=${ search }`).then( response => {
                     this.replacements = response.data
+                    console.log(response.data);
                     this.loading = false
                 })
             },

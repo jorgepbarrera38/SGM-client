@@ -17,6 +17,10 @@
                                 <label for="">Nombre</label>
                                 <input type="text" class="form-control" v-model="replacement.name" maxlength="30">
                             </div>
+                            <div class="form-group">
+                                <label for="">Precio</label>
+                                <input type="number" class="form-control" v-model="replacement.price">
+                            </div>
                             <vue-loading v-if="saving" type="spin" color="#d9544e" :size="{ width: '50px', height: '50px' }"></vue-loading>    
                             <div v-else>
                                 <button class="btn btn-primary btn-sm mr-1"><i class="fa fa-save"></i> Guardar</button>
@@ -43,7 +47,8 @@
         data() {
             return {
                 replacement: {
-                    name: ''
+                    name: '',
+                    price: '',
                 },
                 saving: false,
                 errors: {}
