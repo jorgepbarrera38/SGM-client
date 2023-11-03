@@ -27,7 +27,7 @@
                                 <tbody>
                                     <tr v-for="replacement in replacements.data" :key="replacement.id">
                                         <td>{{ replacement.name }}</td>
-                                        <td>{{ replacement.price }}</td>
+                                        <td>${{ replacement.price | convertMoney }}</td>
                                         <th>
                                             <button class="btn btn-warning btn-sm" :disabled="!hasPermission('replacements.edit')" style="margin-right:3px"
                                                 @click="$router.push({ name: 'replacements.edit', params: { id: replacement.id } })">

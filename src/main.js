@@ -53,6 +53,11 @@ axios.get('parameters').then( response => {
   console.log(Vue.prototype.$serverFiles)
 })
 
+Vue.filter('convertMoney', (value) => {
+  //return new Intl.NumberFormat().format(value)
+  return value.toLocaleString('en-US');
+})
+
 require('toastr/build/toastr.min.css')
 
 moment.locale('es')

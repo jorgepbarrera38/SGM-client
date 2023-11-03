@@ -166,7 +166,10 @@
                                         </select>
                                     </div>
                                     <div class="form-group mr-sm-3 mb-2">
-                                        <input type="number" class="form-control" v-model="replacementQuantity" max="100">
+                                        <input type="number" class="form-control" v-model="replacementQuantity" placeholder="Cantidad" max="100">
+                                    </div>
+                                    <div class="form-group mr-sm-3 mb-2">
+                                        <input type="number" class="form-control" v-model="replacementPrice" placeholder="Precio">
                                     </div>
                                     <button type="submit" class="btn btn-primary mb-2">
                                         <i class="fa fa-plus"></i> Agregar
@@ -177,12 +180,14 @@
                                         <thead>
                                             <th>Repuesto</th>
                                             <th>Cantidad</th>
+                                            <th>Precio</th>
                                             <th></th>
                                         </thead>
                                         <tbody>
                                             <tr v-for="(replacement, index) in other_maintenance.replacements" :key="`replacement-${ replacement.replacement_id }`">
                                                 <td>{{ replacement.name }}</td>
                                                 <td>{{ replacement.quantity }}</td>
+                                                <td>${{ Number(replacement.price) | convertMoney }}</td>
                                                 <td>
                                                     <a href="#" class="btn btn-danger btn-sm" @click.prevent="deleteReplacement(index)">
                                                         <i class="fa fa-trash-alt"></i> Eliminar
@@ -401,6 +406,7 @@
                 replacements: [],
                 replacementSelected: {},
                 replacementQuantity: '',
+                replacementPrice: '',
                 checklists: [],
                 checkListSelected: {},
                 checkListSelectedItems: {},
@@ -461,8 +467,16 @@
                     return this.$toastr.error('Ingrese la cantidad')
                 }
 
+                if (!this.replacementPrice) {
+                    return this.$toastr.error('Ingrese el precio')
+                }
+
                 if (this.replacementQuantity < 1) {
                     return this.$toastr.error('Cantidad no válida')
+                }
+
+                if (this.replacementPrice < 0) {
+                    return this.$toastr.error('Precio no válido')
                 }
 
                 let replacementNowIsAdded = this.other_maintenance.replacements.find(replacement => replacement.replacement_id == this.replacementSelected.id)
@@ -473,18 +487,20 @@
                             return { 
                                 replacement_id: replacement.replacement_id, 
                                 name: replacement.name,
-                                quantity: parseInt(replacement.quantity) + parseInt(this.replacementQuantity)
+                                quantity: parseInt(replacement.quantity) + parseInt(this.replacementQuantity),
+                                price: this.replacementPrice
                             }
                         } else {
                             return replacement
                         }
                     })
                 } else {
-                    this.other_maintenance.replacements.push({ replacement_id: this.replacementSelected.id, name: this.replacementSelected.name, quantity: this.replacementQuantity })
+                    this.other_maintenance.replacements.push({ replacement_id: this.replacementSelected.id, name: this.replacementSelected.name, quantity: this.replacementQuantity, price: this.replacementPrice })
                 }
                 
                 this.replacementSelected = {}
                 this.replacementQuantity = ''
+                this.replacementPrice = ''
 
             },
             deleteReplacement (replacement) {
@@ -611,5 +627,14 @@
                 this.$toastr.success('Borrador guardado')
             }
         },
+        watch: {
+            replacementSelected () {
+                if (this.replacementSelected.price) {
+                    this.replacementPrice = this.replacementSelected.price
+                } else {
+                    this.replacementPrice = ''
+                }
+            }
+        }
     }
 </script>
